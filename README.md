@@ -48,8 +48,3 @@ Note that if you use the Admin Plugin, a file with your configuration named cald
 
 ## Usage
 
-
-## To Do
-
-- [ ] Process multiple Calendars (currently, only one is supported)
-
