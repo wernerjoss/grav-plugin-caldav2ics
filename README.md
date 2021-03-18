@@ -48,9 +48,9 @@ scheduled_jobs:
   logs: logs/caldav2ics.log
 calendars:
   -
-    Name: Test Calendar
+    Name: 'Test Calendar'
     Url: 'https://yourcaldavserver.net/remote.php/dav/calendars/myself/testcalendar'
-    User: myself
+    User: 'myself'
     Pass: 'my#secret$password'
 ```
 
@@ -58,6 +58,10 @@ Note that if you use the Admin Plugin, a file with your configuration named cald
 In Addition, Configuration via the Admin is much easier than by editing the config file, as this has a nice, (hopefully) self-explaining UI, so you should really use this, at least for a Start :smile:
 
 ## Usage
+Once installed, you should at first enable the Grav Scheduler (if not already done) - see [the official docs](https://learn.getgrav.org/17/advanced/scheduler).  
+From this point, all you need to do is correctly fill out the Form in the Admin for the caldav2ics Plugin.  
+This should be rather self-explanatory, as already stated.  
+It is, however, not always that easy to correctly determine the URL of remote CalDav Calendars, although most commonly used Incarnations (such as OwnCloud, NextCloud...) provide extra Links for that.
 
 ## TODO
 Trigger ICS Generation via Button in the Admin
