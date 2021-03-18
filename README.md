@@ -38,10 +38,20 @@ If you use the Admin Plugin, you can install the plugin directly by browsing the
 
 Before configuring this plugin, you should copy the `user/plugins/caldav2ics/caldav2ics.yaml` to `user/config/plugins/caldav2ics.yaml` and only edit that copy.
 
-Here is the default configuration and an explanation of available options:
+Here is a sample configuration for a single remote Calendar:
 
 ```yaml
 enabled: true
+scheduled_jobs:
+  enabled: true
+  at: '15 * * * *'
+  logs: logs/caldav2ics.log
+calendars:
+  -
+    Name: Test Calendar
+    Url: 'https://yourcaldavserver.net/remote.php/dav/calendars/myself/testcalendar'
+    User: myself
+    Pass: 'my#secret$password'
 ```
 
 Note that if you use the Admin Plugin, a file with your configuration named caldav2ics.yaml will be saved in the `user/config/plugins/`-folder once the configuration is saved in the Admin.  
