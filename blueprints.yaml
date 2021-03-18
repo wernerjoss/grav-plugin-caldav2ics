@@ -1,0 +1,78 @@
+name: Caldav2ics
+slug: caldav2ics
+type: plugin
+version: 0.1.0
+description: Create ICS Calendar File(s) from remote Caldav Calendar(s)
+icon: calendar
+author:
+  name: Werner Joss
+  email: wernerjoss@users.noreply.github.com
+homepage: https://github.com/wernerjoss/grav-plugin-caldav2ics
+demo: http://demo.yoursite.com
+keywords: grav, plugin, etc
+bugs: https://github.com/wernerjoss/grav-plugin-caldav2ics/issues
+docs: https://github.com/wernerjoss/grav-plugin-caldav2ics/blob/develop/README.md
+license: MIT
+
+dependencies:
+  - { name: grav, version: '>=1.6.0' }
+
+form:
+  validation: loose
+  fields:
+    enabled:
+      type: toggle
+      label: PLUGIN_ADMIN.PLUGIN_STATUS
+      highlight: 1
+      default: 0
+      options:
+        1: PLUGIN_ADMIN.ENABLED
+        0: PLUGIN_ADMIN.DISABLED
+      validate:
+        type: bool
+    scheduled_jobs.enabled:
+      type: toggle
+      label: Enable ICS creation Scheduled Job
+      help: Use the Grav Scheduler to kick off a background ICS creation job
+      highlight: 0
+      default: 0
+      options:
+        1: Enabled
+        0: Disabled
+      validate:
+        type: bool
+    scheduled_jobs.at:
+      type: cron
+      label: Scheduled Job Frequency
+      size: medium
+      help: Use 'cron' format
+      default: '0 */3 * * *'
+      placeholder: '0 */3 * * *'
+    scheduled_jobs.logs:
+      type: text
+      label: Scheduled Job Log File
+      placeholder: 'logs/tntsearch-index.out'
+      size: medium
+    # see https://discourse.getgrav.org/t/how-to-make-array-form-field-in-blueprint-yaml/945
+    calendars:
+      type: list
+      label: Calendars
+      help: Your remote Calendars to create ICS Files from
+      fields:
+        .Name: 
+          type: text
+          label: Name
+          required: true
+        .Url: 
+          type: url
+          label: URL
+          required: true
+        .User: 
+          type: text
+          label: User
+          required: true
+        .Pass: 
+          type: text
+          label: Password
+          required: true
+        
