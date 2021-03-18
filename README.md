@@ -2,8 +2,9 @@
 
 The **Caldav2ics** Plugin is an extension for [Grav CMS](http://github.com/getgrav/grav). It creates ICS Calendar File(s) from remote Caldav Calendar(s)
 
-Ever thought about to use your (remote) CalDav Calendar(s) as an automatic data source for your favourite Grav Calendar Plugin ?
-Searched for a Plugin that would provide this functionality in the Grav Plugins Directory and found nothing useful ?
+**Motivation:**
+Ever thought about to use your (remote) CalDav Calendar(s) as an automatic data source for your favourite Grav Calendar Plugin ?  
+Searched for a Plugin that would provide this functionality in the Grav Plugins Directory and found nothing useful ?  
 Well, in case of 'Yes' to both questions, this is for You :-) .  
 The functionality of this plugin is based on my former Wordpress Plugin [wp-caldav2ics](https://wordpress.org/plugins/wp-caldav2ics/), the Configuration is fully integrated in the [Grav Scheduler](https://learn.getgrav.org/17/advanced/scheduler).  
 This way, the Generation of the ICS Calendar(s) is automated to run at predefined Intervals, you can, however, also trigger this by hand in the Admin Backend (see **TODO**).
@@ -55,13 +56,16 @@ calendars:
 ```
 
 Note that if you use the Admin Plugin, a file with your configuration named caldav2ics.yaml will be saved in the `user/config/plugins/`-folder once the configuration is saved in the Admin.  
-In Addition, Configuration via the Admin is much easier than by editing the config file, as this has a nice, (hopefully) self-explaining UI, so you should really use this, at least for a Start :smile:
+In Addition, Configuration via the Admin is much easier than by editing the config file, as this has a nice, (hopefully) self-explaining UI, so you should really use this, at least for a Start :smile:.
 
 ## Usage
 Once installed, you should at first enable the Grav Scheduler (if not already done) - see [the official docs](https://learn.getgrav.org/17/advanced/scheduler).  
 From this point, all you need to do is correctly fill out the Form in the Admin for the caldav2ics Plugin.  
 This should be rather self-explanatory, as already stated.  
-It is, however, not always that easy to correctly determine the URL of remote CalDav Calendars, although most commonly used Incarnations (such as OwnCloud, NextCloud...) provide extra Links for that.
+It is, however, not always that easy to correctly determine the URL of remote CalDav Calendars, although most commonly used Incarnations (such as OwnCloud, NextCloud...) provide extra Links for that.  
+Also note that it is not only necessary to enable the Plugin itself, but also the scheduled_jobs (see Configuration).  
+Once the Configuration is saved, the ICS Generation process should run at the desired time schedule, a good idea is always to check the Logfile.  
+Hint: if this does not happen after the first Save in the Admin, just save the Configuration once more and it should be ok (not sure why this is sometimes necessary).
 
 ## TODO
 Trigger ICS Generation via Button in the Admin
