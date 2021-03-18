@@ -1,4 +1,4 @@
-en:
+de:
   PLUGIN_CALDAV2ICS:
-    TEXT_VARIABLE: Text Variable
-    TEXT_VARIABLE_HELP: Text to add to the top of a page
+    CALENDARS: Kalender
+    CALENDARS_HELP: Die remote Kalender aus denen ICS Dateien erzeugt werden
