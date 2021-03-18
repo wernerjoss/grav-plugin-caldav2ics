@@ -8,10 +8,9 @@ author:
   name: Werner Joss
   email: wernerjoss@users.noreply.github.com
 homepage: https://github.com/wernerjoss/grav-plugin-caldav2ics
-demo: http://demo.yoursite.com
 keywords: grav, plugin, etc
 bugs: https://github.com/wernerjoss/grav-plugin-caldav2ics/issues
-docs: https://github.com/wernerjoss/grav-plugin-caldav2ics/blob/develop/README.md
+docs: https://github.com/wernerjoss/grav-plugin-caldav2ics/README.md
 license: MIT
 
 dependencies:
