@@ -1,8 +1,12 @@
 # Caldav2ics Plugin
 
-**This README.md file should be modified to describe the features, installation, configuration, and general usage of the plugin.**
-
 The **Caldav2ics** Plugin is an extension for [Grav CMS](http://github.com/getgrav/grav). It creates ICS Calendar File(s) from remote Caldav Calendar(s)
+
+Ever thought about to use your (remote) CalDav Calendar(s) as an automatic data source for your favourite Grav Calendar Plugin ?
+Searched for a Plugin that would provide this functionality in the Grav Plugins Directory and found nothing useful ?
+Well, in case of 'Yes' to both questions, this is for You :-) .  
+The functionality of this plugin is based on my former Wordpress Plugin [wp-caldav2ics](https://wordpress.org/plugins/wp-caldav2ics/) ,the Configuration is fully integrated in the [Grav Scheduler](https://learn.getgrav.org/17/advanced/scheduler).  
+This way, the Generation of the ICS Calendar(s) is fully automated to run at predefined Intervals, you can, however, also trigger this by hand in the Admin Backend.
 
 ## Installation
 
@@ -44,11 +48,6 @@ Note that if you use the Admin Plugin, a file with your configuration named cald
 
 ## Usage
 
-Ever thought about to use your (remote) CalDav Calendar(s) as an automatic data source for your favourite Grav Calendar Plugin ?
-Searched for a Plugin that would provide this functionality in the Grav Plugins Directory and found nothing useful ?
-Well, in case of 'Yes' to both questions, this is for You :-) .  
-The functionality of this plugin is based on my former Wordpress Plugin [wp-caldav2ics](https://wordpress.org/plugins/wp-caldav2ics/) ,the Configuration is fully integrated in the [Grav Scheduler](https://learn.getgrav.org/17/advanced/scheduler).  
-This way, the Generation of the ICS Calendar(s) is fully automated to run at predefined Intervals, you can, however, also trigger this by hand in the Admin Backend.
 
 ## To Do
 
