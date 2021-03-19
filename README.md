@@ -67,7 +67,18 @@ This should be rather self-explanatory, as already stated.
 It is, however, not always that easy to correctly determine the URL of remote CalDav Calendars, although most commonly used Incarnations (such as OwnCloud, NextCloud...) provide extra Links for that.  
 Also note that it is not only necessary to enable the Plugin itself, but also the scheduled_jobs (see Configuration).  
 Once the Configuration is saved, the ICS Generation process should run at the desired time schedule, a good idea is always to check the Logfile.  
-Hint: if this does not happen after the first Save in the Admin, just save the Configuration once more and it should be ok (not sure why this is sometimes necessary).
+Hint: if this does not happen after the first Save in the Admin, just save the Configuration once more and it should be ok (not sure why this is sometimes necessary).  
+Also note there is currently an issue if your Server's php is not /usr/local/bin/php - this can be solved ATM by just creating as symlink form your php binary to /usr/local/bin/php, see also **TODO** below.
+
+## Dependencies
+Here is a short list which shows what is necessary to run this Plugin:
+-	Grav CMS V 1.7.x
+-	cron access on the Server
+-	Grav Scheduler enabled
+-	php-curl
+-	php-json
+-	php-xml
 
 ## TODO
-Trigger ICS Generation via Button in the Admin
+- Trigger ICS Generation via Button in the Admin
+- solve the [shebang Problem](https://discourse.getgrav.org/t/shebang-in-php-file/16737)
