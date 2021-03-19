@@ -54,7 +54,7 @@ class Caldav2icsPlugin extends Plugin
             //    'onPagesInitialized' => ['onPagesInitialized', 1000],
         ]);
     }
-    
+
     /**
      * Add create_calendars job to Grav Scheduler
      * Requires Grav 1.6.0 - Scheduler
@@ -74,7 +74,7 @@ class Caldav2icsPlugin extends Plugin
             $Args = array();
             array_push($Args, $JobFile, $CalendarsFile);
             //  dump($Args);
-		    $job = $scheduler->addCommand('user/plugins/caldav2ics/jobs/create_calendars.php', $CalendarsFile);
+            $job = $scheduler->addCommand('user/plugins/caldav2ics/jobs/create_calendars.php', $CalendarsFile);
             
             //  $job = $scheduler->addCommand('user/plugins/caldav2ics/jobs/create_calendars.sh', $JobFile, $CalendarsFile);    //  does not work, see create_calendars.sh comments
             /*  TODO: make internal function work with scheduler
@@ -102,7 +102,7 @@ class Caldav2icsPlugin extends Plugin
         $jsondata = json_encode($calendars);
         //  dump($jsondata);
         $CalendarsFile = DATA_DIR . 'calendars/calendars.yaml';	// json file !
-		//  dump($CalendarsFile);
+        //  dump($CalendarsFile);
         file_put_contents($CalendarsFile, $jsondata);
         //  $this::createCalendars($CalendarsFile);    // call this directly upon save, no button needed :-)
     }
