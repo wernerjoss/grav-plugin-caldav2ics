@@ -8,7 +8,7 @@ author:
   name: Werner Joss
   email: wernerjoss@users.noreply.github.com
 homepage: https://github.com/wernerjoss/grav-plugin-caldav2ics
-keywords: grav, plugin, etc
+keywords: grav, plugin, ICS Calendar, CalDav, OwnCloud, NextCloud
 bugs: https://github.com/wernerjoss/grav-plugin-caldav2ics/issues
 docs: https://github.com/wernerjoss/grav-plugin-caldav2ics/README.md
 license: MIT
@@ -50,7 +50,7 @@ form:
     scheduled_jobs.logs:
       type: text
       label: Scheduled Job Log File
-      placeholder: 'logs/tntsearch-index.out'
+      placeholder: 'logs/caldav2ics.out'
       size: medium
     # see https://discourse.getgrav.org/t/how-to-make-array-form-field-in-blueprint-yaml/945
     calendars:

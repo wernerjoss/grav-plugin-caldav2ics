@@ -6,10 +6,10 @@
 	// as stated below, $CalendarsFile is a json file, but renamed for security reasons, as it contains sensible login data (userames/passwords)
 	// proposal is caldav2ics.yaml, as yaml files are usually not served by apache, even if their name/address ist known. but e.g. config.php will also do.
 	// the reason I did not use yaml format here is, that most hosting environments do not include php-yaml, but php-json.
-	
+
 	$verbose = false;
 	$LogEnabled = true;
-	
+
 	if ($argc > 1)	{
 		$CalendarsFile = $argv[1];
 		if ($verbose)	var_dump($CalendarsFile);
@@ -18,7 +18,7 @@
 		exit();
 	}
     $LogFile = pathinfo($CalendarsFile, PATHINFO_DIRNAME)."/create_calendars.log";
-	
+
 	if ( file_exists($CalendarsFile) ) {
 		$jsondata = file_get_contents($CalendarsFile);
 		$Config = (array) json_decode($jsondata);
@@ -53,7 +53,7 @@
 			}
 			//	break;
 			$fmdelay = 60;	// seconds
-			
+
 			if ($LogEnabled)	{
 				$loghandle = fopen($LogFile, 'w') or die('Cannot open file:  '.$LogFile);
 			}
@@ -68,7 +68,7 @@
 				fclose($loghandle);
 				return;
 			}
-			
+
 			if (filter_var($calendar_url, FILTER_VALIDATE_URL) === false) {
 				print_r("Invalid Calendar URL: ", $calendar_url);
 				if (!$LogEnabled) {
@@ -82,18 +82,20 @@
 			if ($LogEnabled)	{
 				print_r($calendar_url);
 				fwrite($loghandle, $calendar_url."\n");
+				/*	no :-)
 				fwrite($loghandle, $calendar_user."\n");
 				fwrite($loghandle, $calendar_password."\n");
+				*/
 				fwrite($loghandle, "Delay:".$fmdelay."\n");
 				fwrite($loghandle, "EnableLog:".$LogEnabled."\n");
-			}	
+			}
 			// Simple caching system, feel free to change the delay
 			if (file_exists($ICalFile)) {
 				$last_update = filemtime($ICalFile);
 			} else {
 				$last_update = 0;
 			}
-			if ($last_update + $fmdelay < time()) {	
+			if ($last_update + $fmdelay < time()) {
 
 				// Get events
 				$headers = array(
@@ -101,7 +103,7 @@
 					'Depth: 1',
 					'Prefer: return-minimal'
 				);
-				
+
 				// see https://uname.pingveno.net/blog/index.php/post/2016/07/30/Sample-public-calendar-for-ownCloud-using-ICS-parser
 				// Prepare request body, MANDATORY !
 				$doc  = new DOMDocument('1.0', 'utf-8');
@@ -124,9 +126,9 @@
 
 				$doc->appendChild($query);
 				$body = $doc->saveXML();
-				
+
 				// Debugging purpose
-				if ($LogEnabled) { 
+				if ($LogEnabled) {
 					echo htmlspecialchars($body);
 					fwrite($loghandle, htmlspecialchars($body));
 				}
@@ -146,8 +148,8 @@
 
 				$response = curl_exec($ch);
 				if (curl_error($ch)) {
-					if ($LogEnabled) { 
-						echo curl_error($ch); 
+					if ($LogEnabled) {
+						echo curl_error($ch);
 						fwrite($loghandle, curl_error($ch));
 						fclose($loghandle);
 					}
@@ -156,7 +158,7 @@
 				curl_close($ch);
 
 				// Debugging purpose
-				if ($LogEnabled) { 
+				if ($LogEnabled) {
 					echo htmlspecialchars($response);
 					fwrite($loghandle, htmlspecialchars($response));
 				}
@@ -168,7 +170,7 @@
 				// Parse events
 				$calendar_events = array();
 				$handle = fopen($ICalFile, 'w') or die('Cannot open file:  '.$ICalFile);
-				
+
 				// create valid ICS File with only ONE Vcalendar !
 				// write VCALENDAR header
 				fwrite($handle, 'BEGIN:VCALENDAR'."\r\n");
@@ -222,13 +224,13 @@
 				}
 				fwrite($handle, 'END:VCALENDAR'."\r\n");
 				fclose($handle);
-					if ($LogEnabled) { 
+					if ($LogEnabled) {
 					fclose($loghandle);
 				}
 			}
 		}
 	}
-		
+
 	function startswith ($string, $stringToSearchFor) {
 		if (substr(trim($string),0,strlen($stringToSearchFor)) == $stringToSearchFor) {
 				// the string starts with the string you're looking for

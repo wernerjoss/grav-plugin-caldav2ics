@@ -29,7 +29,7 @@ You should now have all the plugin files under
 
     /your/site/grav/user/plugins/caldav2ics
 	
-> NOTE: This plugin is a modular component for Grav which may require other plugins to operate, please see its [blueprints.yaml-file on GitHub](https://github.com/wernerjoss/grav-plugin-caldav2ics/blob/master/blueprints.yaml).
+> NOTE: This plugin is a modular component for Grav which may require other plugins to operate, please see its [blueprints.yaml-file on GitHub](https://github.com/wernerjoss/grav-plugin-caldav2ics/blob/master/blueprints.yaml).  
 
 ### Admin Plugin
 
@@ -37,7 +37,8 @@ If you use the Admin Plugin, you can install the plugin directly by browsing the
 
 ## Configuration
 
-Before configuring this plugin, you should copy the `user/plugins/caldav2ics/caldav2ics.yaml` to `user/config/plugins/caldav2ics.yaml` and only edit that copy.
+Before configuring this plugin, you should copy the `user/plugins/caldav2ics/caldav2ics.yaml` to `user/config/plugins/caldav2ics.yaml` and only edit that copy.  
+Be sure to make the file jobs/create_calendars.php executable (chmod +x) in case you edit the config file by hand - in case you the Admin for Configuration, this will be done automatically upon save (there seems to be no way to do this upon Installation).
 
 Here is a sample configuration for a single remote Calendar:
 
@@ -49,9 +50,9 @@ scheduled_jobs:
   logs: logs/caldav2ics.log
 calendars:
   -
-    Name: 'Test Calendar'
+    Name: TestCalendar
     Url: 'https://yourcaldavserver.net/remote.php/dav/calendars/myself/testcalendar'
-    User: 'myself'
+    User: myself
     Pass: 'my#secret$password'
 ```
 
