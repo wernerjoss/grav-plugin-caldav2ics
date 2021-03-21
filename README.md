@@ -68,7 +68,14 @@ It is, however, not always that easy to correctly determine the URL of remote Ca
 Also note that it is not only necessary to enable the Plugin itself, but also the scheduled_jobs (see Configuration).  
 Once the Configuration is saved, the ICS Generation process should run at the desired time schedule, a good idea is always to check the Logfile.  
 Hint: if this does not happen after the first Save in the Admin, just save the Configuration once more and it should be ok (not sure why this is sometimes necessary).  
-Also note there is currently an issue if your Server's php is not /usr/local/bin/php - this can be solved ATM by just creating as symlink form your php binary to /usr/local/bin/php, see also **TODO** below.
+
+## Hints
+This Plugins is currently tested and proved to work in a local Grav docker Instance as well as a local LAMP Server (Debian buster).
+As said, it requires cron access for the Server's www user (mostly www-data).  
+In case you do not have this (so, Grav Scheduler not functional), but some other possibility to run a single php script periodically,
+you may use [standalone caldav2ics](https://github.com/wernerjoss/caldav2ics) for the same functionality.  
+In this case, you can use this Plugin as a graphical Frontend to easily create a config file (caldav2ics.yaml) for the mentioned standalone script.
+Additionally, there is even a scenario to run this Plugin automatically on a local Server and then push the created ICS File(s) to your production Server - this can also be done automatically, e.g. with ncftp (ncftp can upload Files automatically without user intervention).
 
 ## Dependencies
 Here is a short list which shows what is necessary to run this Plugin:
@@ -80,5 +87,4 @@ Here is a short list which shows what is necessary to run this Plugin:
 -	php-xml
 
 ## TODO
-- Trigger ICS Generation via Button in the Admin
-- solve the [shebang Problem](https://discourse.getgrav.org/t/shebang-in-php-file/16737)
+- evtl. Trigger ICS Generation via Button in the Admin
