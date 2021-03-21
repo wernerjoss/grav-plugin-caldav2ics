@@ -6,6 +6,7 @@ use Grav\Common\Plugin;
 use Grav\Common\Scheduler\Scheduler;
 use RocketTheme\Toolbox\Event\Event;
 use RocketTheme\Toolbox\File\File;
+use Symfony\Component\Process\PhpExecutableFinder;
 
 /**
  * Class Caldav2icsPlugin
@@ -67,23 +68,17 @@ class Caldav2icsPlugin extends Plugin
             $scheduler = $e['scheduler'];
             $at = $config['scheduled_jobs']['at'] ?? '* * * * *';
             $logs = $config['scheduled_jobs']['logs'] ?? '';
-            
-            //  $job = $scheduler->addFunction('Grav\Plugin\caldav2ics::createCalendars', [], '');
-            $JobFile = pathinfo(__FILE__, PATHINFO_DIRNAME)."/jobs/create_calendars.sh";
-            $CalendarsFile = DATA_DIR . 'calendars/calendars.yaml';
-            $Args = array();
-            array_push($Args, $JobFile, $CalendarsFile);
-            //  dump($Args);
-            $job = $scheduler->addCommand('user/plugins/caldav2ics/jobs/create_calendars.php', $CalendarsFile);
-            
-            //  $job = $scheduler->addCommand('user/plugins/caldav2ics/jobs/create_calendars.sh', $JobFile, $CalendarsFile);    //  does not work, see create_calendars.sh comments
-            /*  TODO: make internal function work with scheduler
-            $job = $scheduler->addFunction('Grav\Plugin\Caldav2icsPlugin::createCalendars', $CalendarsFile);
-            $func = $this->createCalendars(); //($CalendarsFile);
-            dump($func);
-            $job = $scheduler->addFunction($func, $CalendarsFile);
-            */
 
+            $CalendarsFile = DATA_DIR . 'calendars/calendars.yaml';
+            $VendorJobFile = pathinfo(__FILE__, PATHINFO_DIRNAME)."/jobs/create_calendars.php";
+            $RealJobFile = pathinfo(__FILE__, PATHINFO_DIRNAME)."/jobs/job.php";
+            if (file_exists($RealJobFile)) {
+                $JobFile = $RealJobFile;
+            } else {
+                $JobFile = $VendorJobFile;
+            }
+            $job = $scheduler->addCommand($JobFile, $CalendarsFile);
+            
             $job->at($at);
             $job->output($logs);
             $job->backlink('/plugins/caldav2ics');
@@ -93,9 +88,37 @@ class Caldav2icsPlugin extends Plugin
 
     public function onAdminAfterSave(): void
     {
-        $JobFile = pathinfo(__FILE__, PATHINFO_DIRNAME)."/jobs/create_calendars.sh";
+        $VendorJobFile = pathinfo(__FILE__, PATHINFO_DIRNAME)."/jobs/create_calendars.php";
+        
+        $phpBinaryFinder = new PhpExecutableFinder();
+        $php = $php ?? $phpBinaryFinder->find();
+        //  dump($php);
+        $shebang = "#!".$php;
+        //  dump($shebang);
+        $lines = array();
+        $handle = fopen($VendorJobFile, 'r');
+        if ($handle) {
+            $sb = fgets($handle);
+            while (($buffer = fgets($handle, 4096)) !== false) {
+                array_push($lines, $buffer);
+            }
+            fclose($handle);
+        }
+        if (! $this->startswith($sb,$shebang))   {
+            $RealJobFile = pathinfo(__FILE__, PATHINFO_DIRNAME)."/jobs/job.php";
+            $handle = fopen($RealJobFile, 'w');
+            
+            if ($handle) {
+                fwrite($handle, $shebang . "\n");
+                foreach($lines as $line) {
+                        fwrite($handle, $line);
+                }
+                fclose($handle);
+            }
+		}
         //  dump($JobFile);
-        chmod($JobFile, 0775);  // octal; correct value of mode
+        chmod($VendorJobFile, 0775);  // octal; correct value of mode
+        if (file_exists($RealJobFile)) chmod($RealJobFile, 0775);  // octal; correct value of mode
         $config = $this->config();
         $calendars = array ( "calendars" => $config['calendars']);
         //  dump($calendars);   // funktioniert ! (aber erst beim 2ten Save - TODO: prüfen !)
@@ -104,7 +127,16 @@ class Caldav2icsPlugin extends Plugin
         $CalendarsFile = DATA_DIR . 'calendars/calendars.yaml';	// json file !
         //  dump($CalendarsFile);
         file_put_contents($CalendarsFile, $jsondata);
-        //  $this::createCalendars($CalendarsFile);    // call this directly upon save, no button needed :-)
+    }
+
+    private function startswith ($string, $stringToSearchFor) {
+        if (substr(trim($string),0,strlen($stringToSearchFor)) == $stringToSearchFor) {
+                // the string starts with the string you're looking for
+                return true;
+        } else {
+                // the string does NOT start with the string you're looking for
+                return false;
+        }
     }
 
     public function createCalendars()   {

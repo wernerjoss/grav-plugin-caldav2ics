@@ -1,4 +1,4 @@
-#!/usr/local/bin/php
+#!/usr/bin/php
 <?php
 	// Standalone CalDav2ics (e.g. for cron job...)
 	// stores Logfile and Calendar File in same Directory as script
@@ -7,7 +7,7 @@
 	// proposal is caldav2ics.yaml, as yaml files are usually not served by apache, even if their name/address ist known. but e.g. config.php will also do.
 	// the reason I did not use yaml format here is, that most hosting environments do not include php-yaml, but php-json.
 
-	$verbose = false;
+	$verbose = true;
 	$LogEnabled = true;
 
 	if ($argc > 1)	{
