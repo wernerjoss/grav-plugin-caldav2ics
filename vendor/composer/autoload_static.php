@@ -4,33 +4,42 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit79cc66522807683b72b51ec5d09c68e4
+class ComposerStaticInitcc8f69a5cd92697c1552a0563a92be42
 {
+    public static $files = array (
+        '320cde22f66dd4f5d3fd621d3e88b98f' => __DIR__ . '/..' . '/symfony/polyfill-ctype/bootstrap.php',
+        '0e6d7bf4a5811bfa5cf40c5ccd6fae6a' => __DIR__ . '/..' . '/symfony/polyfill-mbstring/bootstrap.php',
+    );
+
     public static $prefixLengthsPsr4 = array (
-        'G' => 
+        'S' => 
         array (
-            'Grav\\Plugin\\Caldav2ics\\' => 23,
+            'Symfony\\Polyfill\\Mbstring\\' => 26,
+            'Symfony\\Polyfill\\Ctype\\' => 23,
+            'Symfony\\Component\\DomCrawler\\' => 29,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'Grav\\Plugin\\Caldav2ics\\' => 
+        'Symfony\\Polyfill\\Mbstring\\' => 
         array (
-            0 => __DIR__ . '/../..' . '/classes',
+            0 => __DIR__ . '/..' . '/symfony/polyfill-mbstring',
         ),
-    );
-
-    public static $classMap = array (
-        'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
-        'Grav\\Plugin\\Caldav2icsPlugin' => __DIR__ . '/../..' . '/caldav2ics.php',
+        'Symfony\\Polyfill\\Ctype\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/symfony/polyfill-ctype',
+        ),
+        'Symfony\\Component\\DomCrawler\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/symfony/dom-crawler',
+        ),
     );
 
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit79cc66522807683b72b51ec5d09c68e4::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit79cc66522807683b72b51ec5d09c68e4::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInit79cc66522807683b72b51ec5d09c68e4::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInitcc8f69a5cd92697c1552a0563a92be42::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInitcc8f69a5cd92697c1552a0563a92be42::$prefixDirsPsr4;
 
         }, null, ClassLoader::class);
     }

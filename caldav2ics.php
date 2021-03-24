@@ -6,7 +6,10 @@ use Grav\Common\Plugin;
 use Grav\Common\Scheduler\Scheduler;
 use RocketTheme\Toolbox\Event\Event;
 use RocketTheme\Toolbox\File\File;
-use Symfony\Component\Process\PhpExecutableFinder;
+use Symfony\Component\DomCrawler\Crawler;
+use Grav\Common\Yaml;
+use Grav\Framework\File\Formatter\YamlFormatter;
+
 
 /**
  * Class Caldav2icsPlugin
@@ -70,6 +73,10 @@ class Caldav2icsPlugin extends Plugin
             $logs = $config['scheduled_jobs']['logs'] ?? '';
 
             $CalendarsFile = DATA_DIR . 'calendars/calendars.yaml';
+            $cfg = Yaml::dump($config["calendars"]);
+            file_put_contents($CalendarsFile, $cfg);
+            //  dump($cfg);
+            
             $VendorJobFile = pathinfo(__FILE__, PATHINFO_DIRNAME)."/jobs/create_calendars.php";
             $RealJobFile = pathinfo(__FILE__, PATHINFO_DIRNAME)."/jobs/job.php";
             if (file_exists($RealJobFile)) {
@@ -77,7 +84,13 @@ class Caldav2icsPlugin extends Plugin
             } else {
                 $JobFile = $VendorJobFile;
             }
-            $job = $scheduler->addCommand($JobFile, $CalendarsFile);
+            
+            //  see php.net:
+            //  When trying to make a callable from a function name located in a namespace, you MUST give the fully qualified function name (regardless of the current namespace or use statements).
+            //  $job = $scheduler->addFunction('Grav\Plugin\Caldav2icsPlugin::createCalendars', $CalendarsFile);    // same as addCommand()...
+            //  $job = $scheduler->addCommand('Grav\Plugin\Caldav2icsPlugin::createCalendars', $CalendarsFile); // this does not (yet) work !
+
+            $job = $scheduler->addCommand($JobFile, $CalendarsFile);    // old approach via external PHP script, ugly, but works :-)
             
             $job->at($at);
             $job->output($logs);
@@ -90,11 +103,9 @@ class Caldav2icsPlugin extends Plugin
     {
         $VendorJobFile = pathinfo(__FILE__, PATHINFO_DIRNAME)."/jobs/create_calendars.php";
         
-        $phpBinaryFinder = new PhpExecutableFinder();
-        $php = $php ?? $phpBinaryFinder->find();
-        //  dump($php);
-        $shebang = "#!".$php;
-        //  dump($shebang);
+        $config = $this->config();
+        $shebang = $config["shebang"];  // new approach, as PhpExecutableFinder(); does not always work !
+        //  dump($shebang); 
         $lines = array();
         $handle = fopen($VendorJobFile, 'r');
         if ($handle) {
@@ -119,17 +130,18 @@ class Caldav2icsPlugin extends Plugin
         //  dump($JobFile);
         chmod($VendorJobFile, 0775);  // octal; correct value of mode
         if (file_exists($RealJobFile)) chmod($RealJobFile, 0775);  // octal; correct value of mode
-        $config = $this->config();
+        
         $calendars = array ( "calendars" => $config['calendars']);
-        //  dump($calendars);   // funktioniert ! (aber erst beim 2ten Save - TODO: prüfen !)
-        $jsondata = json_encode($calendars);
-        //  dump($jsondata);
-        $CalendarsFile = DATA_DIR . 'calendars/calendars.yaml';	// json file !
+        $CalendarsFile = DATA_DIR . 'calendars/calendars.yaml';
         //  dump($CalendarsFile);
-        file_put_contents($CalendarsFile, $jsondata);
+        $formatter = new YamlFormatter;
+        $content = $formatter->encode($config["calendars"]);
+        //  dump($content);
+        \file_put_contents($CalendarsFile, $content);
+        //  $this->createCalendars($CalendarsFile);
     }
 
-    private function startswith ($string, $stringToSearchFor) {
+    public static function startswith ($string, $stringToSearchFor) {  // was: private, not static
         if (substr(trim($string),0,strlen($stringToSearchFor)) == $stringToSearchFor) {
                 // the string starts with the string you're looking for
                 return true;
@@ -139,12 +151,231 @@ class Caldav2icsPlugin extends Plugin
         }
     }
 
-    public function createCalendars()   {
-        //	this is needed for $job = $scheduler->addFunction() - evtl. future task
+    public static function createCalendars($CalendarsFile)   {
+        $verbose = false;
+        $LogEnabled = true;
+        
+        //  internal data, may not be available when called from scheduler ?
         /*
         $config = $this->config();
         $calendars = $config['calendars'];
         dump($calendars);
         */
+        
+        if ($verbose)   dump($CalendarsFile);
+        $RawCfg = file_get_contents($CalendarsFile);
+        if ($verbose)   dump($RawCfg);
+        $calendars = Yaml::parse($RawCfg); // read physical config file, ok
+        if ($verbose)   dump($calendars);
+        $path_parts = pathinfo($CalendarsFile);
+        $ICSpath = $path_parts['dirname'];
+        $LogFile = $ICSpath . '/caldav2ics.log';
+        if ($LogEnabled) {
+            $handle = fopen($LogFile, 'w');
+            fwrite($handle, print_r($CalendarsFile, true)."\n");
+            fwrite($handle, print_r($ICSpath, true)."\n");
+            fwrite($handle, print_r($calendars, true)."\n");
+            fclose($handle);
+        }
+        //  return;
+        
+        foreach ($calendars as $calendar) {
+            //	if ($verbose)	var_dump($calendar);
+            $cal = (array) $calendar;
+            //  dump($cal);
+            //  break;
+            $name = $cal["Name"];
+            $calendar_url = $cal['Url'];
+            $calendar_user = $cal['User'];
+            $calendar_password = $cal['Pass'];
+            
+            $ICalFile = $ICSpath."/".$name.".ics";	// ical file name
+            if ($verbose) {
+                echo "\n";
+                echo "$name\n";
+                echo "$calendar_url\n";
+                echo "$calendar_user\n";
+                echo "$calendar_password\n";
+                echo "$ICalFile\n";
+            }
+            //	break;
+            $fmdelay = 60;	// seconds
+            
+            if ($LogEnabled)	{
+                $loghandle = fopen($LogFile, 'w') or die('Cannot open file:  '.$LogFile);
+            }
+            if (empty($calendar_url) || empty($calendar_user) || empty($calendar_password))	{
+                if ($LogEnabled) {
+                    $loghandle = fopen($LogFile, 'w') or die('Cannot open file:  '.$LogFile);
+                }
+                fwrite($loghandle, "Invalid Settings !\n");
+                fwrite($loghandle, "Calendar URL: ".$calendar_url." must be specified\n");
+                fwrite($loghandle, "Username: ".$calendar_user." must be specified\n");
+                fwrite($loghandle, "Password: ".$calendar_password." must be specified\n");
+                fclose($loghandle);
+                return;
+            }
+            
+            if (filter_var($calendar_url, FILTER_VALIDATE_URL) === false) {
+                print_r("Invalid Calendar URL: ", $calendar_url);
+                if (!$LogEnabled) {
+                    $loghandle = fopen($LogFile, 'w') or die('Cannot open file:  '.$LogFile);
+                    fwrite($loghandle, "Invalid Calendar URL: ", $calendar_url);
+                    fclose($loghandle);
+                }
+                return;
+            }
+
+            if ($LogEnabled)	{
+                print_r($calendar_url);
+                fwrite($loghandle, $calendar_url."\n");
+                fwrite($loghandle, $calendar_user."\n");
+                fwrite($loghandle, $calendar_password."\n");
+                fwrite($loghandle, "Delay:".$fmdelay."\n");
+                fwrite($loghandle, "EnableLog:".$LogEnabled."\n");
+            }	
+            // Simple caching system, feel free to change the delay
+            if (file_exists($ICalFile)) {
+                $last_update = filemtime($ICalFile);
+            } else {
+                $last_update = 0;
+            }
+            if ($last_update + $fmdelay < time()) {	
+
+                // Get events
+                $headers = array(
+                    'Content-Type: application/xml; charset=utf-8',
+                    'Depth: 1',
+                    'Prefer: return-minimal'
+                );
+                
+                // see https://uname.pingveno.net/blog/index.php/post/2016/07/30/Sample-public-calendar-for-ownCloud-using-ICS-parser
+                // Prepare request body, MANDATORY !
+                $doc  = new \DOMDocument('1.0', 'utf-8');
+                $doc->formatOutput = true;
+
+                $query = $doc->createElement('c:calendar-query');
+                $query->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:c', 'urn:ietf:params:xml:ns:caldav');
+                $query->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:d', 'DAV:');
+
+                $prop = $doc->createElement('d:prop');
+                $prop->appendChild($doc->createElement('d:getetag'));
+                $prop->appendChild($doc->createElement('c:calendar-data'));
+                $query->appendChild($prop);
+
+                $prop = $doc->createElement('c:filter');
+                $filter = $doc->createElement('c:comp-filter');
+                $filter->setAttribute('name', 'VCALENDAR');
+                $prop->appendChild($filter);
+                $query->appendChild($prop);
+
+                $doc->appendChild($query);
+                $body = $doc->saveXML();
+                
+                // Debugging purpose
+                if ($LogEnabled) { 
+                    echo htmlspecialchars($body);
+                    fwrite($loghandle, htmlspecialchars($body));
+                }
+
+                // Prepare cURL request
+                $ch = curl_init();
+                curl_setopt($ch, CURLOPT_URL, $calendar_url);
+                curl_setopt($ch, CURLOPT_USERPWD, $calendar_user . ':' . $calendar_password);
+                curl_setopt($ch, CURLOPT_VERBOSE, 1);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+                curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'REPORT');
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+
+                $response = curl_exec($ch);
+                if (curl_error($ch)) {
+                    if ($LogEnabled) { 
+                        echo curl_error($ch); 
+                        fwrite($loghandle, curl_error($ch));
+                        fclose($loghandle);
+                    }
+                    return;
+                }
+                curl_close($ch);
+
+                // Debugging purpose
+                if ($LogEnabled) { 
+                    echo htmlspecialchars($response);
+                    fwrite($loghandle, htmlspecialchars($response));
+                }
+
+                // Get the useful part of the response
+                /*	skip any xml conversion/parsing
+                */
+
+                // Parse events
+                $calendar_events = array();
+                $handle = fopen($ICalFile, 'w') or die('Cannot open file:  '.$ICalFile);
+                
+                // create valid ICS File with only ONE Vcalendar !
+                // write VCALENDAR header
+                fwrite($handle, 'BEGIN:VCALENDAR'."\r\n");
+                fwrite($handle, 'VERSION:2.0'."\r\n");
+                fwrite($handle, 'PRODID:-//hoernerfranzracing/caldav2ics.php'."\r\n");
+                // find and write TIMEZONE data, new feature, 27.12.19
+                $skip = true;
+                $wroteTZ = false;
+                $lines = explode("\n", $response);
+                //  dump($lines);
+                foreach ($lines as $line)   {
+                    $line = trim($line);
+                    if ( !$wroteTZ )	{
+                        if (self::startswith($line,'BEGIN:VTIMEZONE'))	{
+                            $skip = false;
+                        }
+                        if ( !$skip )	{
+                            fwrite($handle, $line."\r\n"); // write everything between 'BEGIN:VTIMEZONE' and 'END:VTIMEZONE'
+                            // echo $line."\n";
+                        }
+                        if (self::startswith($line,'END:VTIMEZONE'))	{
+                            $skip = true;
+                            $wroteTZ = true;    // only write VTIMEZONE entry once
+                        }
+                    }
+                }
+                // parse $response, do NOT write VCALENDAR header for each one, just the event data
+                foreach ($lines as $line) {
+                    $line = trim($line);
+                    if (strstr($line,'BEGIN:VCALENDAR'))	{	// first occurrence might not be at line start
+                        $skip = true;
+                    }
+                    if (self::startswith($line,'PRODID:'))	{
+                        $skip = true;
+                    }
+                    if (strstr($line,'VERSION:'))	{
+                        $skip = true;	// VERSION can appear in different places
+                    }
+                    if (self::startswith($line,'CALSCALE:'))	{
+                        $skip = true;
+                    }
+                    if (self::startswith($line,'BEGIN:VEVENT'))	{
+                        $skip = false;
+                        //fwrite($handle, "\r\n");	// improves readability, but triggers warning in validator :)
+                    }
+                    if (self::startswith($line,'END:VCALENDAR'))	{
+                        $skip = true;
+                    }
+                    if ( !$skip )	{
+                        //  dump($line);
+                        fwrite($handle, $line."\r\n");
+                    }
+                }
+                fwrite($handle, 'END:VCALENDAR'."\r\n");
+                fclose($handle);
+                    if ($LogEnabled) { 
+                    fclose($loghandle);
+                }
+            }
+        }
+        return true;
     }
 }
