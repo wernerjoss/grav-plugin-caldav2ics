@@ -7,17 +7,17 @@
     "license": "MIT",
     "authors": [{
         "name": "Werner Joss",
-        "email": "werner@hoernerfranzracing.de",
+        "email": "wernerjoss@users.noreply.github.com",
         "role": "Developer"
     }],
     "require": {
-        "php": ">=7.1.3",
+        "php": ">=7.3",
         "symfony/dom-crawler": "^4.4",
         "symfony/yaml": "^4.4"
     },
     "config": {
         "platform": {
-            "php": "7.1.3"
+            "php": "7.3"
         }
     }
 }
