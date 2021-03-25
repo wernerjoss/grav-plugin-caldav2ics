@@ -13,7 +13,7 @@
 	$verbose = true;
 	$LogEnabled = true;
 
-	require_once './vendor/autoload.php';
+	require_once __DIR__ . '/../vendor/autoload.php';
 
 	if ($argc > 1)
 		$CalendarsFile = $argv[1];

@@ -1,5 +1,57 @@
 [
     {
+        "name": "symfony/deprecation-contracts",
+        "version": "v2.2.0",
+        "version_normalized": "2.2.0.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/symfony/deprecation-contracts.git",
+            "reference": "5fa56b4074d1ae755beb55617ddafe6f5d78f665"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/symfony/deprecation-contracts/zipball/5fa56b4074d1ae755beb55617ddafe6f5d78f665",
+            "reference": "5fa56b4074d1ae755beb55617ddafe6f5d78f665",
+            "shasum": ""
+        },
+        "require": {
+            "php": ">=7.1"
+        },
+        "time": "2020-09-07T11:33:47+00:00",
+        "type": "library",
+        "extra": {
+            "branch-alias": {
+                "dev-master": "2.2-dev"
+            },
+            "thanks": {
+                "name": "symfony/contracts",
+                "url": "https://github.com/symfony/contracts"
+            }
+        },
+        "installation-source": "dist",
+        "autoload": {
+            "files": [
+                "function.php"
+            ]
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "MIT"
+        ],
+        "authors": [
+            {
+                "name": "Nicolas Grekas",
+                "email": "p@tchwork.com"
+            },
+            {
+                "name": "Symfony Community",
+                "homepage": "https://symfony.com/contributors"
+            }
+        ],
+        "description": "A generic function and convention to trigger deprecation notices",
+        "homepage": "https://symfony.com"
+    },
+    {
         "name": "symfony/dom-crawler",
         "version": "v4.4.20",
         "version_normalized": "4.4.20.0",
@@ -185,5 +237,65 @@
             "portable",
             "shim"
         ]
+    },
+    {
+        "name": "symfony/yaml",
+        "version": "v5.2.5",
+        "version_normalized": "5.2.5.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/symfony/yaml.git",
+            "reference": "298a08ddda623485208506fcee08817807a251dd"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/symfony/yaml/zipball/298a08ddda623485208506fcee08817807a251dd",
+            "reference": "298a08ddda623485208506fcee08817807a251dd",
+            "shasum": ""
+        },
+        "require": {
+            "php": ">=7.2.5",
+            "symfony/deprecation-contracts": "^2.1",
+            "symfony/polyfill-ctype": "~1.8"
+        },
+        "conflict": {
+            "symfony/console": "<4.4"
+        },
+        "require-dev": {
+            "symfony/console": "^4.4|^5.0"
+        },
+        "suggest": {
+            "symfony/console": "For validating YAML files using the lint command"
+        },
+        "time": "2021-03-06T07:59:01+00:00",
+        "bin": [
+            "Resources/bin/yaml-lint"
+        ],
+        "type": "library",
+        "installation-source": "dist",
+        "autoload": {
+            "psr-4": {
+                "Symfony\\Component\\Yaml\\": ""
+            },
+            "exclude-from-classmap": [
+                "/Tests/"
+            ]
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "MIT"
+        ],
+        "authors": [
+            {
+                "name": "Fabien Potencier",
+                "email": "fabien@symfony.com"
+            },
+            {
+                "name": "Symfony Community",
+                "homepage": "https://symfony.com/contributors"
+            }
+        ],
+        "description": "Loads and dumps YAML files",
+        "homepage": "https://symfony.com"
     }
 ]
