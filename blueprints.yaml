@@ -1,7 +1,7 @@
 name: Caldav2ics
 slug: caldav2ics
 type: plugin
-version: 0.1.0
+version: 0.2.0
 description: Create ICS Calendar File(s) from remote Caldav Calendar(s)
 icon: calendar
 author:
