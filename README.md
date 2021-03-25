@@ -48,6 +48,7 @@ scheduled_jobs:
   enabled: true
   at: '15 * * * *'
   logs: logs/caldav2ics.log
+shebang: '#!/usr/bin/php'
 calendars:
   -
     Name: TestCalendar
@@ -72,16 +73,16 @@ Hint: if this does not happen after the first Save in the Admin, just save the C
 ## Hints
 This Plugins is currently tested and proved to work in a local Grav docker Instance as well as a local LAMP Server (Debian buster).
 As said, it requires cron access for the Server's www user (mostly www-data).  
-before saving the plugin configuration (remote calendar data..), please check if the default PHP shebang #!/usr/bin/php is correct for your Webserver, if not, correct it, otherwise the Plugin will NOT work ! (note the Tooltip)  
+before saving the plugin configuration (remote calendar data..), please check if the default PHP shebang #!/usr/bin/php is correct for your Webserver, if not, correct it, otherwise the Plugin will NOT work ! (note the Tooltip).  
 In case you do not have this (so, Grav Scheduler not functional), but some other possibility to run a single php script periodically,
-you may use [standalone caldav2ics](https://github.com/wernerjoss/caldav2ics) for the same functionality.  
+you may want to use the [standalone caldav2ics](https://github.com/wernerjoss/caldav2ics) for the same functionality.  
 In this case, you can use this Plugin as a graphical Frontend to easily create a config file (caldav2ics.yaml) for the mentioned standalone script.
-Additionally, there is even a scenario to run this Plugin automatically on a local Server and then push the created ICS File(s) to your production Server - this can also be done automatically, e.g. with ncftp (ncftp can upload Files automatically without user intervention).  
+Additionally, there is even a scenario to run this Plugin automatically on a local Server and then push the created ICS File(s) to your production Server - this can also be done automatically via crontab, e.g. with ncftp (ncftp can upload Files automatically without user intervention).  
 
 ## Dependencies
 Here is a short list which shows what is necessary to run this Plugin:
 -	Grav CMS V 1.7.x
--	cron access on the Server
+-	cron access for the www-user on the Server
 -	Grav Scheduler enabled
 -	php-curl
 
