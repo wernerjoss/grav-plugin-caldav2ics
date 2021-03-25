@@ -10,6 +10,7 @@ use Symfony\Component\DomCrawler\Crawler;
 use Grav\Common\Yaml;
 use Grav\Framework\File\Formatter\YamlFormatter;
 
+use Symfony\Component\Process\PhpExecutableFinder;  // for php executable detection
 
 /**
  * Class Caldav2icsPlugin
@@ -105,6 +106,13 @@ class Caldav2icsPlugin extends Plugin
         
         $config = $this->config();
         $shebang = $config["shebang"];  // new approach, as PhpExecutableFinder(); does not always work !
+        //  dump($shebang);
+        if ( $shebang == null ) {   // this is the default, see above: try to find php executable if config is empty, this should work on most servers, if not, override with config value !
+            $phpBinaryFinder = new PhpExecutableFinder();
+            $php = $php ?? $phpBinaryFinder->find();
+            //  dump($php);
+            $shebang = "#!".$php;
+        }
         //  dump($shebang); 
         $lines = array();
         $handle = fopen($VendorJobFile, 'r');

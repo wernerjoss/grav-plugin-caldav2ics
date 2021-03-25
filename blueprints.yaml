@@ -54,8 +54,9 @@ form:
       size: medium
     shebang:
       type: text
-      label: Your Server's PHP Shebang (check if default is ok)
-      help: do NOT use '#!/usr/bin/env php' - this will not work !
+      required: false
+      label: Your Server's PHP Shebang. e.g '#!/usr/bin/php'
+      help: leave this empty if not sure, will then be detected automatically, which mostly works
       placeholder: '#!/usr/bin/php'
       size: medium
     calendars:
