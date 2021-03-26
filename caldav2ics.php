@@ -73,11 +73,6 @@ class Caldav2icsPlugin extends Plugin
             $at = $config['scheduled_jobs']['at'] ?? '* * * * *';
             $logs = $config['scheduled_jobs']['logs'] ?? '';
 
-            $CalendarsFile = DATA_DIR . 'calendars/calendars.yaml';
-            $cfg = Yaml::dump($config["calendars"]);
-            file_put_contents($CalendarsFile, $cfg);
-            //  dump($cfg);
-            
             $VendorJobFile = pathinfo(__FILE__, PATHINFO_DIRNAME)."/jobs/create_calendars.php";
             $RealJobFile = pathinfo(__FILE__, PATHINFO_DIRNAME)."/jobs/job.php";
             if (file_exists($RealJobFile)) {
@@ -85,7 +80,13 @@ class Caldav2icsPlugin extends Plugin
             } else {
                 $JobFile = $VendorJobFile;
             }
-            
+            $CalendarsFile = DATA_DIR . 'calendars/calendars.yaml';
+            $CalfileAge = time()-filemtime($CalendarsFile);
+            $content = Yaml::dump($config["calendars"]);
+            $JobfileAge = time()-filemtime($JobFile);    // $VendorJobFile is used to do the Job, so this is also the time refernce
+            if ($JobfileAge < $CalfileAge)
+                \file_put_contents($CalendarsFile, $content);   // write new $CalendarsFile only if existing Version is older than $JobFile
+        
             //  see php.net:
             //  When trying to make a callable from a function name located in a namespace, you MUST give the fully qualified function name (regardless of the current namespace or use statements).
             //  $job = $scheduler->addFunction('Grav\Plugin\Caldav2icsPlugin::createCalendars', $CalendarsFile);    // same as addCommand()...
@@ -103,7 +104,11 @@ class Caldav2icsPlugin extends Plugin
     public function onAdminAfterSave(): void
     {
         $VendorJobFile = pathinfo(__FILE__, PATHINFO_DIRNAME)."/jobs/create_calendars.php";
-        
+        $Perms = substr(sprintf('%o', fileperms($VendorJobFile)), -4);  // actual Permissions, octal
+        //  dump($Perms);
+        if (! $this::startswith($Perms, '0775'))
+            chmod($VendorJobFile, 0775);  // octal; correct value of mode only if not executable
+
         $config = $this->config();
         $shebang = $config["shebang"];  // new approach, as PhpExecutableFinder(); does not always work !
         //  dump($shebang);
@@ -117,36 +122,44 @@ class Caldav2icsPlugin extends Plugin
         $lines = array();
         $handle = fopen($VendorJobFile, 'r');
         if ($handle) {
-            $sb = fgets($handle);
+            $sb = fgets($handle);   // $sb is shebang from $VendorJobFile
             while (($buffer = fgets($handle, 4096)) !== false) {
                 array_push($lines, $buffer);
             }
             fclose($handle);
         }
-        if (! $this->startswith($sb,$shebang))   {
+        $fileAge = time()-filemtime($VendorJobFile);    // this is always the reference
+        if (! $this::startswith($sb,$shebang))   {
             $RealJobFile = pathinfo(__FILE__, PATHINFO_DIRNAME)."/jobs/job.php";
-            $handle = fopen($RealJobFile, 'w');
-            
-            if ($handle) {
-                fwrite($handle, $shebang . "\n");
-                foreach($lines as $line) {
-                        fwrite($handle, $line);
+            if (file_exists($RealJobFile)) {    // if this exists, check if it is younger than reference file,
+                $JobfileAge = time()-filemtime($RealJobFile);    
+                if ($fileAge < $JobfileAge) {                // Vendor Job file is older than existing Job File (e.g. updated), so recreate it
+                    $handle = fopen($RealJobFile, 'w');
+                    if ($handle) {
+                        fwrite($handle, $shebang . "\n");
+                        foreach($lines as $line) {
+                                fwrite($handle, $line);
+                        }
+                        fclose($handle);
+                        $JobfileAge = time()-filemtime($RealJobFile);    
+                    }
+                    if (file_exists($RealJobFile)) chmod($RealJobFile, 0775);  // octal; correct value of mode
                 }
-                fclose($handle);
             }
-		}
-        //  dump($JobFile);
-        chmod($VendorJobFile, 0775);  // octal; correct value of mode
-        if (file_exists($RealJobFile)) chmod($RealJobFile, 0775);  // octal; correct value of mode
+    	}   else    {
+            $JobfileAge = time()-filemtime($VendorJobFile);    // $VendorJobFile is used to do the Job, so this is also the time refernce
+        }
         
         $calendars = array ( "calendars" => $config['calendars']);
         $CalendarsFile = DATA_DIR . 'calendars/calendars.yaml';
+        $CalfileAge = time()-filemtime($CalendarsFile);
         //  dump($CalendarsFile);
         $formatter = new YamlFormatter;
         $content = $formatter->encode($config["calendars"]);
         //  dump($content);
-        \file_put_contents($CalendarsFile, $content);
-        //  $this->createCalendars($CalendarsFile);
+        if ($JobfileAge < $CalfileAge)
+            \file_put_contents($CalendarsFile, $content);   // write new $CalendarsFile only if existing Version is older than $JobFile
+        //  $this::createCalendars($CalendarsFile);
     }
 
     public static function startswith ($string, $stringToSearchFor) {  // was: private, not static
