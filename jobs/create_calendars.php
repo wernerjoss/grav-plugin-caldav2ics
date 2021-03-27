@@ -11,7 +11,7 @@
 	// the reason I did not use yaml format here is, that most hosting environments do not include php-yaml, but php-json.
 
 	$verbose = true;
-	$LogEnabled = true;
+	$LogEnabled = false;
 
 	require_once __DIR__ . '/../vendor/autoload.php';
 
@@ -21,7 +21,7 @@
 		$ICSpath = $argv[2];
 	if ( file_exists($CalendarsFile) ) {
 		$Config = Yaml::parseFile($CalendarsFile);	// now, this is a real yaml file ;-)
-		//	if ($verbose)	var_dump($Config);
+		//	var_dump($Config);
 		//	exit;
 	}	else	{	
 		echo("Calendars File not found, using default Config data !");
@@ -29,7 +29,7 @@
 	
 	$LogFile = pathinfo($CalendarsFile, PATHINFO_DIRNAME)."/create_calendars.log";
 
-	if ($verbose)	var_dump('Entry:', $Config);
+	//	var_dump('Entry:', $Config);
 	foreach ($Config as $calendars) {
 		$cal = (array) $calendars;
 		$name = $cal["Name"];
@@ -37,14 +37,16 @@
 		$calendar_user = $cal['User'];
 		$calendar_password = $cal['Pass'];
 		$ICalFile = pathinfo($CalendarsFile, PATHINFO_DIRNAME)."/".$name.".ics";
-		if ($verbose)	var_dump($ICalFile);
+		//	var_dump($ICalFile);
 		//	break;
 		if ($verbose) {
 			echo "\n";
-			echo "$name\n";
-			echo "$calendar_url\n";
-			echo "md5($calendar_user, true)\n";
-			echo "md5($calendar_password, true)\n";
+			echo "Calendar: $name\n";
+			echo "URL: $calendar_url\n";
+			$user = md5($calendar_user, true);
+			echo "User: $user\n";
+			$pw = md5($calendar_password, true);
+			echo "PW: $pw\n";
 			echo "$ICalFile\n";
 		}
 		//	break;

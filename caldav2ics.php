@@ -185,7 +185,7 @@ class Caldav2icsPlugin extends Plugin
         }
     }
 
-    public static function createCalendars($CalendarsFile)   {  // TODO: make this work when called from the scheduler (currently only work with direct call from inside admin)
+    public static function createCalendars($CalendarsFile)   {  // TODO: make this work when called from the scheduler (currently only works with direct call from inside admin)
         $verbose = false;
         $LogEnabled = true;
         
@@ -196,11 +196,11 @@ class Caldav2icsPlugin extends Plugin
         dump($calendars);
         */
         
-        if ($verbose)   dump($CalendarsFile);
+        //  dump($CalendarsFile);
         $RawCfg = file_get_contents($CalendarsFile);
         if ($verbose)   dump($RawCfg);
         $calendars = Yaml::parse($RawCfg); // read physical config file, ok
-        if ($verbose)   dump($calendars);
+        //  dump($calendars);
         $path_parts = pathinfo($CalendarsFile);
         $ICSpath = $path_parts['dirname'];
         $LogFile = $ICSpath . '/caldav2ics.log';
@@ -214,7 +214,6 @@ class Caldav2icsPlugin extends Plugin
         //  return;
         
         foreach ($calendars as $calendar) {
-            //	if ($verbose)	var_dump($calendar);
             $cal = (array) $calendar;
             //  dump($cal);
             //  break;
@@ -226,10 +225,12 @@ class Caldav2icsPlugin extends Plugin
             $ICalFile = $ICSpath."/".$name.".ics";	// ical file name
             if ($verbose) {
                 echo "\n";
-                echo "$name\n";
-                echo "$calendar_url\n";
-                echo "$calendar_user\n";
-                echo "$calendar_password\n";
+                echo "Calendar: $name\n";
+                echo "URL: $calendar_url\n";
+                $user = md5($calendar_user, true);
+                echo "User: $user\n";
+                $pw = md5($calendar_password, true);
+                echo "PW: $pw\n";
                 echo "$ICalFile\n";
             }
             //	break;
