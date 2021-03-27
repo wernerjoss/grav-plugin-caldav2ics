@@ -56,7 +56,7 @@ form:
       type: text
       required: false
       label: Your Server's PHP Shebang. e.g '#!/usr/bin/php'
-      help: leave this empty if not sure, will then be detected automatically, which mostly works
+      help: leave this empty if not sure, will then be detected automatically, which mostly works - only if not, correct !
       placeholder: '#!/usr/bin/php'
       size: medium
     calendars:

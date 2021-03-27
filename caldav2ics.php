@@ -145,19 +145,32 @@ class Caldav2icsPlugin extends Plugin
                     }
                     if (file_exists($RealJobFile)) chmod($RealJobFile, 0775);  // octal; correct value of mode
                 }
+            }   else    {   //  Vendor shebang does not fit, create $RealJobFile with shebang from config
+                $handle = fopen($RealJobFile, 'w');
+                if ($handle) {
+                    fwrite($handle, $shebang . "\n");
+                    foreach($lines as $line) {
+                            fwrite($handle, $line);
+                    }
+                    fclose($handle);
+                    $JobfileAge = time()-filemtime($RealJobFile);    
+                }
+                if (file_exists($RealJobFile)) chmod($RealJobFile, 0775);  // octal; correct value of mode
             }
     	}   else    {
             $JobfileAge = time()-filemtime($VendorJobFile);    // $VendorJobFile is used to do the Job, so this is also the time refernce
         }
         
         $calendars = array ( "calendars" => $config['calendars']);
+        if (! is_dir(DATA_DIR . 'calendars'))
+            mkdir(DATA_DIR . 'calendars', '0775');  // create data dir, if not exists
         $CalendarsFile = DATA_DIR . 'calendars/calendars.yaml';
         $CalfileAge = time()-filemtime($CalendarsFile);
         //  dump($CalendarsFile);
         $formatter = new YamlFormatter;
         $content = $formatter->encode($config["calendars"]);
         //  dump($content);
-        if ($JobfileAge < $CalfileAge)
+        if (($JobfileAge < $CalfileAge) or (! file_exists($CalendarsFile)))
             \file_put_contents($CalendarsFile, $content);   // write new $CalendarsFile only if existing Version is older than $JobFile
         //  $this::createCalendars($CalendarsFile);
     }
@@ -172,7 +185,7 @@ class Caldav2icsPlugin extends Plugin
         }
     }
 
-    public static function createCalendars($CalendarsFile)   {
+    public static function createCalendars($CalendarsFile)   {  // TODO: make this work when called from the scheduler (currently only work with direct call from inside admin)
         $verbose = false;
         $LogEnabled = true;
         
