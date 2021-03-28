@@ -71,7 +71,7 @@ Once the Configuration is saved, the ICS Generation process should run at the de
 Hint: if this does not happen after the first Save in the Admin, just save the Configuration once more and it should be ok (not sure why this is sometimes necessary).  
 
 ## Hints
-This Plugins is currently tested and proved to work in a local Grav docker Instance as well as a local LAMP Server (Debian buster).
+This Plugins is currently tested and proved to work in a local Grav docker Instance as well as a local LAMP Server (Debian buster) and my own Website.
 As said, it requires cron access for the Server's www user (mostly www-data).  
 before saving the plugin configuration (remote calendar data..), please check if the default PHP shebang #!/usr/bin/php is correct for your Webserver, if not, correct it, otherwise the Plugin will NOT work ! (note the Tooltip).  
 In case you do not have this (so, Grav Scheduler not functional), but some other possibility to run a single php script periodically,
