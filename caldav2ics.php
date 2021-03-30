@@ -35,8 +35,6 @@ class Caldav2icsPlugin extends Plugin
                 ['autoload', 100000],
                 ['onPluginsInitialized', 0]
             ],
-            'onSchedulerInitialized'    => ['onSchedulerInitialized', 0],
-            'onAdminAfterSave'    => ['onAdminAfterSave', 0],
         ];
     }
 
@@ -56,10 +54,11 @@ class Caldav2icsPlugin extends Plugin
     public function onPluginsInitialized(): void
     {
         $this->enable([
-            //    'onPagesInitialized' => ['onPagesInitialized', 1000],
+            'onSchedulerInitialized'    => ['onSchedulerInitialized', 0],
+            'onAdminAfterSave'    => ['onAdminAfterSave', 0],
         ]);
     }
-
+    
     /**
      * Add create_calendars job to Grav Scheduler
      * Requires Grav 1.6.0 - Scheduler
@@ -69,35 +68,45 @@ class Caldav2icsPlugin extends Plugin
         $config = $this->config();
         //  dump($config);
         if ($config['enabled']) {   // NICHT plugins.caldav2ics.enabled !!!
-            $scheduler = $e['scheduler'];
-            $at = $config['scheduled_jobs']['at'] ?? '* * * * *';
-            $logs = $config['scheduled_jobs']['logs'] ?? '';
+            if (!empty($config['scheduled_jobs']['enabled'])) {    // this is also necessary
+                if (!empty($config['calendars']) && ($config['scheduled_jobs']['enabled'])) {
+                    $scheduler = $e['scheduler'];
+                    $at = $config['scheduled_jobs']['at'] ?? '* * * * *';
+                    $logs = $config['scheduled_jobs']['logs'] ?? '';
 
-            $VendorJobFile = pathinfo(__FILE__, PATHINFO_DIRNAME)."/jobs/create_calendars.php";
-            $RealJobFile = pathinfo(__FILE__, PATHINFO_DIRNAME)."/jobs/job.php";
-            if (file_exists($RealJobFile)) {
-                $JobFile = $RealJobFile;
-            } else {
-                $JobFile = $VendorJobFile;
+                    $VendorJobFile = pathinfo(__FILE__, PATHINFO_DIRNAME)."/jobs/create_calendars.php";
+                    $RealJobFile = pathinfo(__FILE__, PATHINFO_DIRNAME)."/jobs/job.php";
+                    if (file_exists($RealJobFile)) {
+                        $JobFile = $RealJobFile;
+                    } else {
+                        $JobFile = $VendorJobFile;
+                    }
+                    $CalendarsFile = DATA_DIR . 'calendars/calendars.yaml';
+                    if (! is_dir(DATA_DIR . 'calendars'))   {
+                        mkdir(DATA_DIR . 'calendars', 0775);  // create data dir, if not exists
+                    }
+                    $CalfileAge = 0; // default, is always older than any existing file
+                    if (\file_exists($CalendarsFile))   {
+                        $CalfileAge = time()-filemtime($CalendarsFile);
+                    }
+                    $content = Yaml::dump($config["calendars"]);
+                    $JobfileAge = time()-filemtime($JobFile);    // $VendorJobFile is used to do the Job, so this is also the time refernce
+                    if ($JobfileAge < $CalfileAge)  {
+                        \file_put_contents($CalendarsFile, $content);   // write new $CalendarsFile only if existing Version is older than $JobFile
+                    }
+                    //  see php.net:
+                    //  When trying to make a callable from a function name located in a namespace, you MUST give the fully qualified function name (regardless of the current namespace or use statements).
+                    //  $job = $scheduler->addFunction('Grav\Plugin\Caldav2icsPlugin::createCalendars', $CalendarsFile);    // same as addCommand()...
+                    //  $job = $scheduler->addCommand('Grav\Plugin\Caldav2icsPlugin::createCalendars', $CalendarsFile); // this does not (yet) work !
+
+                    $job = $scheduler->addCommand($JobFile, $CalendarsFile);    // old approach via external PHP script, ugly, but works :-)
+                    
+                    $job->at($at);
+                    $job->output($logs);
+                    $job->backlink('/plugins/caldav2ics');
+                    //  dump($job);
+                }
             }
-            $CalendarsFile = DATA_DIR . 'calendars/calendars.yaml';
-            $CalfileAge = time()-filemtime($CalendarsFile);
-            $content = Yaml::dump($config["calendars"]);
-            $JobfileAge = time()-filemtime($JobFile);    // $VendorJobFile is used to do the Job, so this is also the time refernce
-            if ($JobfileAge < $CalfileAge)
-                \file_put_contents($CalendarsFile, $content);   // write new $CalendarsFile only if existing Version is older than $JobFile
-        
-            //  see php.net:
-            //  When trying to make a callable from a function name located in a namespace, you MUST give the fully qualified function name (regardless of the current namespace or use statements).
-            //  $job = $scheduler->addFunction('Grav\Plugin\Caldav2icsPlugin::createCalendars', $CalendarsFile);    // same as addCommand()...
-            //  $job = $scheduler->addCommand('Grav\Plugin\Caldav2icsPlugin::createCalendars', $CalendarsFile); // this does not (yet) work !
-
-            $job = $scheduler->addCommand($JobFile, $CalendarsFile);    // old approach via external PHP script, ugly, but works :-)
-            
-            $job->at($at);
-            $job->output($logs);
-            $job->backlink('/plugins/caldav2ics');
-            //  dump($job);
         }
     }
 
@@ -106,34 +115,47 @@ class Caldav2icsPlugin extends Plugin
         $VendorJobFile = pathinfo(__FILE__, PATHINFO_DIRNAME)."/jobs/create_calendars.php";
         $Perms = substr(sprintf('%o', fileperms($VendorJobFile)), -4);  // actual Permissions, octal
         //  dump($Perms);
-        if (! $this::startswith($Perms, '0775'))
+        if (! $this::startswith($Perms, '0775'))    {
             chmod($VendorJobFile, 0775);  // octal; correct value of mode only if not executable
-
+        }
         $config = $this->config();
-        $shebang = $config["shebang"];  // new approach, as PhpExecutableFinder(); does not always work !
-        //  dump($shebang);
-        if ( $shebang == null ) {   // this is the default, see above: try to find php executable if config is empty, this should work on most servers, if not, override with config value !
-            $phpBinaryFinder = new PhpExecutableFinder();
-            $php = $php ?? $phpBinaryFinder->find();
-            //  dump($php);
-            $shebang = "#!".$php;
-        }
-        //  dump($shebang); 
-        $lines = array();
-        $handle = fopen($VendorJobFile, 'r');
-        if ($handle) {
-            $sb = fgets($handle);   // $sb is shebang from $VendorJobFile
-            while (($buffer = fgets($handle, 4096)) !== false) {
-                array_push($lines, $buffer);
+        if (!empty($config['calendars'])) {
+            $shebang = $config["shebang"];  // new approach, as PhpExecutableFinder(); does not always work !
+            //  dump($shebang);
+            if ( $shebang == null ) {   // this is the default, see above: try to find php executable if config is empty, this should work on most servers, if not, override with config value !
+                $PhpBinaryFinder = new PhpExecutableFinder();
+                $php = $php ?? $PhpBinaryFinder->find();
+                //  dump($php);
+                $shebang = "#!".$php;
             }
-            fclose($handle);
-        }
-        $fileAge = time()-filemtime($VendorJobFile);    // this is always the reference
-        if (! $this::startswith($sb,$shebang))   {
-            $RealJobFile = pathinfo(__FILE__, PATHINFO_DIRNAME)."/jobs/job.php";
-            if (file_exists($RealJobFile)) {    // if this exists, check if it is younger than reference file,
-                $JobfileAge = time()-filemtime($RealJobFile);    
-                if ($fileAge < $JobfileAge) {                // Vendor Job file is older than existing Job File (e.g. updated), so recreate it
+            //  dump($shebang); 
+            $lines = array();
+            $handle = fopen($VendorJobFile, 'r');
+            if ($handle) {
+                $sb = fgets($handle);   // $sb is shebang from $VendorJobFile
+                while (($buffer = fgets($handle, 4096)) !== false) {
+                    array_push($lines, $buffer);
+                }
+                fclose($handle);
+            }
+            $FileAge = time()-filemtime($VendorJobFile);    // this is always the reference
+            if (! $this::startswith($sb,$shebang))   {
+                $RealJobFile = pathinfo(__FILE__, PATHINFO_DIRNAME)."/jobs/job.php";
+                if (file_exists($RealJobFile)) {    // if this exists, check if it is younger than reference file,
+                    $JobfileAge = time()-filemtime($RealJobFile);    
+                    if ($FileAge < $JobfileAge) {                // Vendor Job file is older than existing Job File (e.g. updated), so recreate it
+                        $handle = fopen($RealJobFile, 'w');
+                        if ($handle) {
+                            fwrite($handle, $shebang . "\n");
+                            foreach($lines as $line) {
+                                    fwrite($handle, $line);
+                            }
+                            fclose($handle);
+                            $JobfileAge = time()-filemtime($RealJobFile);    
+                        }
+                        if (file_exists($RealJobFile)) chmod($RealJobFile, 0775);  // octal; correct value of mode
+                    }
+                }   else    {   //  Vendor shebang does not fit, create $RealJobFile with shebang from config
                     $handle = fopen($RealJobFile, 'w');
                     if ($handle) {
                         fwrite($handle, $shebang . "\n");
@@ -145,33 +167,27 @@ class Caldav2icsPlugin extends Plugin
                     }
                     if (file_exists($RealJobFile)) chmod($RealJobFile, 0775);  // octal; correct value of mode
                 }
-            }   else    {   //  Vendor shebang does not fit, create $RealJobFile with shebang from config
-                $handle = fopen($RealJobFile, 'w');
-                if ($handle) {
-                    fwrite($handle, $shebang . "\n");
-                    foreach($lines as $line) {
-                            fwrite($handle, $line);
-                    }
-                    fclose($handle);
-                    $JobfileAge = time()-filemtime($RealJobFile);    
-                }
-                if (file_exists($RealJobFile)) chmod($RealJobFile, 0775);  // octal; correct value of mode
+            }   else    {
+                $JobfileAge = time()-filemtime($VendorJobFile);    // $VendorJobFile is used to do the Job, so this is also the time refernce
             }
-    	}   else    {
-            $JobfileAge = time()-filemtime($VendorJobFile);    // $VendorJobFile is used to do the Job, so this is also the time refernce
+            
+            $calendars = array ( "calendars" => $config['calendars']);
+            $CalendarsFile = DATA_DIR . 'calendars/calendars.yaml';
+            //  dump($CalendarsFile);
+            if (! is_dir(DATA_DIR . 'calendars'))   {
+                mkdir(DATA_DIR . 'calendars', 0775);  // create data dir, if not exists
+            }
+            $CalfileAge = 0; // default, is always older than any existing file
+            if (\file_exists($CalendarsFile))   {
+                $CalfileAge = time()-filemtime($CalendarsFile);
+            }
+            $formatter = new YamlFormatter;
+            $content = $formatter->encode($config["calendars"]);
+            //  dump($content);
+            if (($JobfileAge < $CalfileAge) or (! file_exists($CalendarsFile))) {
+                \file_put_contents($CalendarsFile, $content);   // write new $CalendarsFile only if existing Version is older than $JobFile
+            }
         }
-        
-        $calendars = array ( "calendars" => $config['calendars']);
-        if (! is_dir(DATA_DIR . 'calendars'))
-            mkdir(DATA_DIR . 'calendars', '0775');  // create data dir, if not exists
-        $CalendarsFile = DATA_DIR . 'calendars/calendars.yaml';
-        $CalfileAge = time()-filemtime($CalendarsFile);
-        //  dump($CalendarsFile);
-        $formatter = new YamlFormatter;
-        $content = $formatter->encode($config["calendars"]);
-        //  dump($content);
-        if (($JobfileAge < $CalfileAge) or (! file_exists($CalendarsFile)))
-            \file_put_contents($CalendarsFile, $content);   // write new $CalendarsFile only if existing Version is older than $JobFile
         //  $this::createCalendars($CalendarsFile);
     }
 
@@ -202,12 +218,12 @@ class Caldav2icsPlugin extends Plugin
         $calendars = Yaml::parse($RawCfg); // read physical config file, ok
         //  dump($calendars);
         $path_parts = pathinfo($CalendarsFile);
-        $ICSpath = $path_parts['dirname'];
-        $LogFile = $ICSpath . '/caldav2ics.log';
+        $IcsPath = $path_parts['dirname'];
+        $LogFile = $IcsPath . '/caldav2ics.log';
         if ($LogEnabled) {
             $handle = fopen($LogFile, 'w');
             fwrite($handle, print_r($CalendarsFile, true)."\n");
-            fwrite($handle, print_r($ICSpath, true)."\n");
+            fwrite($handle, print_r($IcsPath, true)."\n");
             fwrite($handle, print_r($calendars, true)."\n");
             fclose($handle);
         }
@@ -222,7 +238,7 @@ class Caldav2icsPlugin extends Plugin
             $calendar_user = $cal['User'];
             $calendar_password = $cal['Pass'];
             
-            $ICalFile = $ICSpath."/".$name.".ics";	// ical file name
+            $IcalFile = $IcsPath."/".$name.".ics";	// ical file name
             if ($verbose) {
                 echo "\n";
                 echo "Calendar: $name\n";
@@ -231,7 +247,7 @@ class Caldav2icsPlugin extends Plugin
                 echo "User: $user\n";
                 $pw = md5($calendar_password, true);
                 echo "PW: $pw\n";
-                echo "$ICalFile\n";
+                echo "$IcalFile\n";
             }
             //	break;
             $fmdelay = 60;	// seconds
@@ -270,8 +286,8 @@ class Caldav2icsPlugin extends Plugin
                 fwrite($loghandle, "EnableLog:".$LogEnabled."\n");
             }	
             // Simple caching system, feel free to change the delay
-            if (file_exists($ICalFile)) {
-                $last_update = filemtime($ICalFile);
+            if (file_exists($IcalFile)) {
+                $last_update = filemtime($IcalFile);
             } else {
                 $last_update = 0;
             }
@@ -349,7 +365,7 @@ class Caldav2icsPlugin extends Plugin
 
                 // Parse events
                 $calendar_events = array();
-                $handle = fopen($ICalFile, 'w') or die('Cannot open file:  '.$ICalFile);
+                $handle = fopen($IcalFile, 'w') or die('Cannot open file:  '.$IcalFile);
                 
                 // create valid ICS File with only ONE Vcalendar !
                 // write VCALENDAR header

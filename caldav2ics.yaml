@@ -1,1 +1,12 @@
-enabled: true
+enabled: false
+scheduled_jobs:
+  enabled: false
+  at: '15 * * * *'
+  logs: logs/caldav2ics.log
+shebang:  # leave this empty, if unsure, see Tooltip in Admin Backend !
+calendars:
+  -
+    Name: TestCalendar
+    Url: 'https://yourcaldavserver.net/remote.php/dav/calendars/myself/testcalendar'
+    User: myself
+    Pass: 'my#secret$password'

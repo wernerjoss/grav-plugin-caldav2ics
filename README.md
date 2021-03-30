@@ -48,7 +48,7 @@ scheduled_jobs:
   enabled: true
   at: '15 * * * *'
   logs: logs/caldav2ics.log
-shebang: '#!/usr/bin/php'
+shebang: # leave this empty if unsure
 calendars:
   -
     Name: TestCalendar
@@ -63,9 +63,9 @@ In Addition, Configuration via the Admin is much easier than by editing the conf
 
 ## Usage
 Once installed, you should at first enable the Grav Scheduler (if not already done) - see [the official docs](https://learn.getgrav.org/17/advanced/scheduler).  
-From this point, all you need to do is correctly fill out the Form in the Admin for the caldav2ics Plugin.  
+From this point, all you need to do is correctly fill out the Form in the Admin for the caldav2ics Plugin and then enable the created Job in the Scheduler.  
 This should be rather self-explanatory, as already stated.  
-It is, however, not always that easy to correctly determine the URL of remote CalDav Calendars, although most commonly used Incarnations (such as OwnCloud, NextCloud...) provide extra Links for that.  
+It is, however, not always that easy to correctly determine the URL of remote CalDav Calendars, although most commonly used Incarnations (such as OwnCloud, NextCloud...) provide extra Links for that - in case of difficulties, you may consider using [this script](https://github.com/wernerjoss/caldav2ics/blob/master/caldavexplore.sh) to find out.  
 Also note that it is not only necessary to enable the Plugin itself, but also the scheduled_jobs (see Configuration).  
 Once the Configuration is saved, the ICS Generation process should run at the desired time schedule, a good idea is always to check the Logfile.  
 Hint: if this does not happen after the first Save in the Admin, just save the Configuration once more and it should be ok (not sure why this is sometimes necessary).  
@@ -73,11 +73,14 @@ Hint: if this does not happen after the first Save in the Admin, just save the C
 ## Hints
 This Plugins is currently tested and proved to work in a local Grav docker Instance as well as a local LAMP Server (Debian buster) and my own Website.
 As said, it requires cron access for the Server's www user (mostly www-data).  
-before saving the plugin configuration (remote calendar data..), please check if the default PHP shebang #!/usr/bin/php is correct for your Webserver, if not, correct it, otherwise the Plugin will NOT work ! (note the Tooltip).  
-In case you do not have this (so, Grav Scheduler not functional), but some other possibility to run a single php script periodically,
+before saving the plugin configuration (remote calendar data..), please check if the default PHP shebang 
+  #!/usr/bin/php
+is correct for your Webserver, if not, it will be detected automatically, only in case this detection fails (can be seen in the logs): correct it, otherwise the Plugin will NOT work (note the Tooltip).  
+In case you do not have cron access on your webserver (so, Grav Scheduler not functional), but some other possibility to run a single php script periodically,
 you may want to use the [standalone caldav2ics](https://github.com/wernerjoss/caldav2ics) for the same functionality.  
 In this case, you can use this Plugin as a graphical Frontend to easily create a config file (caldav2ics.yaml) for the mentioned standalone script.
 Additionally, there is even a scenario to run this Plugin automatically on a local Server and then push the created ICS File(s) to your production Server - this can also be done automatically via crontab, e.g. with ncftp (ncftp can upload Files automatically without user intervention).  
+Also be aware that the recommended way to configure this plugin is to use the Grav Admin Backend, as this ensures all necessary file/directory creation is done via the webserver user account, so, in case of manual installation and configuration, make sure all plugin files/directories, as well as user/data and user/config are readable and writable by that user.
 
 ## Dependencies
 Here is a short list which shows what is necessary to run this Plugin:

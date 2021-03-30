@@ -18,13 +18,13 @@
 	if ($argc > 1)
 		$CalendarsFile = $argv[1];
 	if ($argc > 2)
-		$ICSpath = $argv[2];
+		$IcsPath = $argv[2];
 	if ( file_exists($CalendarsFile) ) {
 		$Config = Yaml::parseFile($CalendarsFile);	// now, this is a real yaml file ;-)
 		//	var_dump($Config);
 		//	exit;
 	}	else	{	
-		echo("Calendars File not found, using default Config data !");
+		die("Calendars File not found, abort !");
 	}
 	
 	$LogFile = pathinfo($CalendarsFile, PATHINFO_DIRNAME)."/create_calendars.log";
@@ -36,8 +36,8 @@
 		$calendar_url = $cal['Url'];
 		$calendar_user = $cal['User'];
 		$calendar_password = $cal['Pass'];
-		$ICalFile = pathinfo($CalendarsFile, PATHINFO_DIRNAME)."/".$name.".ics";
-		//	var_dump($ICalFile);
+		$IcalFile = pathinfo($CalendarsFile, PATHINFO_DIRNAME)."/".$name.".ics";
+		//	var_dump($IcalFile);
 		//	break;
 		if ($verbose) {
 			echo "\n";
@@ -47,7 +47,7 @@
 			echo "User: $user\n";
 			$pw = md5($calendar_password, true);
 			echo "PW: $pw\n";
-			echo "$ICalFile\n";
+			echo "$IcalFile\n";
 		}
 		//	break;
 		$fmdelay = 60;	// seconds
@@ -88,8 +88,8 @@
 			fwrite($loghandle, "EnableLog:".$LogEnabled."\n");
 		}
 		// Simple caching system, feel free to change the delay
-		if (file_exists($ICalFile)) {
-			$last_update = filemtime($ICalFile);
+		if (file_exists($IcalFile)) {
+			$last_update = filemtime($IcalFile);
 		} else {
 			$last_update = 0;
 		}
@@ -167,7 +167,7 @@
 
 			// Parse events
 			$calendar_events = array();
-			$handle = fopen($ICalFile, 'w') or die('Cannot open file:  '.$ICalFile);
+			$handle = fopen($IcalFile, 'w') or die('Cannot open file:  '.$IcalFile);
 
 			// create valid ICS File with only ONE Vcalendar !
 			// write VCALENDAR header
