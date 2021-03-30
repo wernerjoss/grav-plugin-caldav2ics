@@ -11,7 +11,7 @@
 	// the reason I did not use yaml format here is, that most hosting environments do not include php-yaml, but php-json.
 
 	$verbose = true;
-	$LogEnabled = false;
+	$LogEnabled = true;
 
 	require_once __DIR__ . '/../vendor/autoload.php';
 
