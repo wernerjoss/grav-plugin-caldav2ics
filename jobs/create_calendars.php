@@ -52,18 +52,19 @@
 		//	break;
 		$fmdelay = 60;	// seconds
 
+		$loghandle = null;
 		if ($LogEnabled)	{
 			$loghandle = fopen($LogFile, 'w') or die('Cannot open file:  '.$LogFile);
 		}
 		if (empty($calendar_url) || empty($calendar_user) || empty($calendar_password))	{
 			if (!$LogEnabled) {
 				$loghandle = fopen($LogFile, 'w') or die('Cannot open file:  '.$LogFile);
+				fwrite($loghandle, "Invalid Settings !\n");
+				fwrite($loghandle, "Calendar URL: ".$calendar_url." must be specified\n");
+				fwrite($loghandle, "Username: ".md5($calendar_user, true)." must be specified\n");
+				fwrite($loghandle, "Password: ".md5($calendar_password, true)." must be specified\n");
+				fclose($loghandle);
 			}
-			fwrite($loghandle, "Invalid Settings !\n");
-			fwrite($loghandle, "Calendar URL: ".$calendar_url." must be specified\n");
-			fwrite($loghandle, "Username: ".md5($calendar_user, true)." must be specified\n");
-			fwrite($loghandle, "Password: ".md5($calendar_password, true)." must be specified\n");
-			fclose($loghandle);
 			return;
 		}
 
