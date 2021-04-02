@@ -29,14 +29,16 @@ class Caldav2icsPlugin extends Plugin
      *     higher the number the higher the priority.
      */
     public static function getSubscribedEvents(): array
-    {
+    {   //  see https://github.com/trilbymedia/grav-plugin-tntsearch/blob/develop/tntsearch.php
         return [
             'onPluginsInitialized' => [
                 ['autoload', 100000],
                 ['onPluginsInitialized', 0]
             ],
+            'onSchedulerInitialized'    => ['onSchedulerInitialized', 0],
         ];
     }
+
 
     /**
     * Composer autoload.
@@ -53,10 +55,12 @@ class Caldav2icsPlugin extends Plugin
      */
     public function onPluginsInitialized(): void
     {
-        $this->enable([
-            'onSchedulerInitialized'    => ['onSchedulerInitialized', 0],
-            'onAdminAfterSave'    => ['onAdminAfterSave', 0],
-        ]);
+        if ($this->isAdmin()) {
+            $this->enable([
+                //  see https://github.com/trilbymedia/grav-plugin-tntsearch/blob/develop/tntsearch.php
+                'onAdminAfterSave'    => ['onAdminAfterSave', 0],
+            ]);
+        }
     }
     
     /**
@@ -70,6 +74,7 @@ class Caldav2icsPlugin extends Plugin
         if ($config['enabled']) {   // NICHT plugins.caldav2ics.enabled !!!
             if (!empty($config['scheduled_jobs']['enabled'])) {    // this is also necessary
                 if (!empty($config['calendars']) && ($config['scheduled_jobs']['enabled'])) {
+                    //  dump($config['calendars']); // just to check in backend when this is called - always :-/
                     $scheduler = $e['scheduler'];
                     $at = $config['scheduled_jobs']['at'] ?? '* * * * *';
                     $logs = $config['scheduled_jobs']['logs'] ?? '';
@@ -89,9 +94,9 @@ class Caldav2icsPlugin extends Plugin
                     if (\file_exists($CalendarsFile))   {
                         $CalfileAge = time()-filemtime($CalendarsFile);
                     }
-                    $content = Yaml::dump($config["calendars"]);
                     $JobfileAge = time()-filemtime($JobFile);    // $VendorJobFile is used to do the Job, so this is also the time refernce
                     if ($JobfileAge < $CalfileAge)  {
+                        $content = Yaml::dump($config["calendars"]);
                         \file_put_contents($CalendarsFile, $content);   // write new $CalendarsFile only if existing Version is older than $JobFile
                     }
                     //  see php.net:
@@ -104,7 +109,7 @@ class Caldav2icsPlugin extends Plugin
                     $job->at($at);
                     $job->output($logs);
                     $job->backlink('/plugins/caldav2ics');
-                    //  dump($job);
+                    //  dump($job); // just to check in backend when this is called - always :-/
                 }
             }
         }
@@ -119,6 +124,7 @@ class Caldav2icsPlugin extends Plugin
             chmod($VendorJobFile, 0775);  // octal; correct value of mode only if not executable
         }
         $config = $this->config();
+        //  dump($config);  // just to check in backend when this is called
         if (!empty($config['calendars'])) {
             $shebang = $config["shebang"];  // new approach, as PhpExecutableFinder(); does not always work !
             //  dump($shebang);
@@ -252,24 +258,25 @@ class Caldav2icsPlugin extends Plugin
             //	break;
             $fmdelay = 60;	// seconds
             
+            $loghandle = null;
             if ($LogEnabled)	{
                 $loghandle = fopen($LogFile, 'w') or die('Cannot open file:  '.$LogFile);
             }
             if (empty($calendar_url) || empty($calendar_user) || empty($calendar_password))	{
                 if ($LogEnabled) {
-                    $loghandle = fopen($LogFile, 'w') or die('Cannot open file:  '.$LogFile);
+                    //  $loghandle = fopen($LogFile, 'w') or die('Cannot open file:  '.$LogFile);
+                    fwrite($loghandle, "Invalid Settings !\n");
+                    fwrite($loghandle, "Calendar URL: ".$calendar_url." must be specified\n");
+                    fwrite($loghandle, "Username: ".$calendar_user." must be specified\n");
+                    fwrite($loghandle, "Password: ".$calendar_password." must be specified\n");
+                    fclose($loghandle);
                 }
-                fwrite($loghandle, "Invalid Settings !\n");
-                fwrite($loghandle, "Calendar URL: ".$calendar_url." must be specified\n");
-                fwrite($loghandle, "Username: ".$calendar_user." must be specified\n");
-                fwrite($loghandle, "Password: ".$calendar_password." must be specified\n");
-                fclose($loghandle);
                 return;
             }
             
             if (filter_var($calendar_url, FILTER_VALIDATE_URL) === false) {
                 print_r("Invalid Calendar URL: ", $calendar_url);
-                if (!$LogEnabled) {
+                if (!$LogEnabled) { // log this even when log is not enabled 
                     $loghandle = fopen($LogFile, 'w') or die('Cannot open file:  '.$LogFile);
                     fwrite($loghandle, "Invalid Calendar URL: ", $calendar_url);
                     fclose($loghandle);
