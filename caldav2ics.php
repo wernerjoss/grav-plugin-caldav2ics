@@ -117,39 +117,52 @@ class Caldav2icsPlugin extends Plugin
 
     public function onAdminAfterSave(): void
     {
-        $VendorJobFile = pathinfo(__FILE__, PATHINFO_DIRNAME)."/jobs/create_calendars.php";
-        $Perms = substr(sprintf('%o', fileperms($VendorJobFile)), -4);  // actual Permissions, octal
-        //  dump($Perms);
-        if (! $this::startswith($Perms, '0775'))    {
-            chmod($VendorJobFile, 0775);  // octal; correct value of mode only if not executable
-        }
         $config = $this->config();
-        //  dump($config);  // just to check in backend when this is called
-        if (!empty($config['calendars'])) {
-            $shebang = $config["shebang"];  // new approach, as PhpExecutableFinder(); does not always work !
-            //  dump($shebang);
-            if ( $shebang == null ) {   // this is the default, see above: try to find php executable if config is empty, this should work on most servers, if not, override with config value !
-                $PhpBinaryFinder = new PhpExecutableFinder();
-                $php = $php ?? $PhpBinaryFinder->find();
-                //  dump($php);
-                $shebang = "#!".$php;
+        if ($config['enabled']) {   
+            $VendorJobFile = pathinfo(__FILE__, PATHINFO_DIRNAME)."/jobs/create_calendars.php";
+            $Perms = substr(sprintf('%o', fileperms($VendorJobFile)), -4);  // actual Permissions, octal
+            //  dump($Perms);
+            if (! $this::startswith($Perms, '0775'))    {
+                chmod($VendorJobFile, 0775);  // octal; correct value of mode only if not executable
             }
-            //  dump($shebang); 
-            $lines = array();
-            $handle = fopen($VendorJobFile, 'r');
-            if ($handle) {
-                $sb = fgets($handle);   // $sb is shebang from $VendorJobFile
-                while (($buffer = fgets($handle, 4096)) !== false) {
-                    array_push($lines, $buffer);
+            //  dump($config);  // just to check in backend when this is called
+            if (!empty($config['calendars'])) {
+                $shebang = $config["shebang"];  // new approach, as PhpExecutableFinder(); does not always work !
+                //  dump($shebang);
+                if ( $shebang == null ) {   // this is the default, see above: try to find php executable if config is empty, this should work on most servers, if not, override with config value !
+                    $PhpBinaryFinder = new PhpExecutableFinder();
+                    $php = $php ?? $PhpBinaryFinder->find();
+                    //  dump($php);
+                    $shebang = "#!".$php;
                 }
-                fclose($handle);
-            }
-            $FileAge = time()-filemtime($VendorJobFile);    // this is always the reference
-            if (! $this::startswith($sb,$shebang))   {
-                $RealJobFile = pathinfo(__FILE__, PATHINFO_DIRNAME)."/jobs/job.php";
-                if (file_exists($RealJobFile)) {    // if this exists, check if it is younger than reference file,
-                    $JobfileAge = time()-filemtime($RealJobFile);    
-                    if ($FileAge < $JobfileAge) {                // Vendor Job file is older than existing Job File (e.g. updated), so recreate it
+                //  dump($shebang); 
+                $lines = array();
+                $handle = fopen($VendorJobFile, 'r');
+                if ($handle) {
+                    $sb = fgets($handle);   // $sb is shebang from $VendorJobFile
+                    while (($buffer = fgets($handle, 4096)) !== false) {
+                        array_push($lines, $buffer);
+                    }
+                    fclose($handle);
+                }
+                $FileAge = time()-filemtime($VendorJobFile);    // this is always the reference
+                if (! $this::startswith($sb,$shebang))   {
+                    $RealJobFile = pathinfo(__FILE__, PATHINFO_DIRNAME)."/jobs/job.php";
+                    if (file_exists($RealJobFile)) {    // if this exists, check if it is younger than reference file,
+                        $JobfileAge = time()-filemtime($RealJobFile);    
+                        if ($FileAge < $JobfileAge) {                // Vendor Job file is older than existing Job File (e.g. updated), so recreate it
+                            $handle = fopen($RealJobFile, 'w');
+                            if ($handle) {
+                                fwrite($handle, $shebang . "\n");
+                                foreach($lines as $line) {
+                                        fwrite($handle, $line);
+                                }
+                                fclose($handle);
+                                $JobfileAge = time()-filemtime($RealJobFile);    
+                            }
+                            if (file_exists($RealJobFile)) chmod($RealJobFile, 0775);  // octal; correct value of mode
+                        }
+                    }   else    {   //  Vendor shebang does not fit, create $RealJobFile with shebang from config
                         $handle = fopen($RealJobFile, 'w');
                         if ($handle) {
                             fwrite($handle, $shebang . "\n");
@@ -161,40 +174,29 @@ class Caldav2icsPlugin extends Plugin
                         }
                         if (file_exists($RealJobFile)) chmod($RealJobFile, 0775);  // octal; correct value of mode
                     }
-                }   else    {   //  Vendor shebang does not fit, create $RealJobFile with shebang from config
-                    $handle = fopen($RealJobFile, 'w');
-                    if ($handle) {
-                        fwrite($handle, $shebang . "\n");
-                        foreach($lines as $line) {
-                                fwrite($handle, $line);
-                        }
-                        fclose($handle);
-                        $JobfileAge = time()-filemtime($RealJobFile);    
-                    }
-                    if (file_exists($RealJobFile)) chmod($RealJobFile, 0775);  // octal; correct value of mode
+                }   else    {
+                    $JobfileAge = time()-filemtime($VendorJobFile);    // $VendorJobFile is used to do the Job, so this is also the time refernce
                 }
-            }   else    {
-                $JobfileAge = time()-filemtime($VendorJobFile);    // $VendorJobFile is used to do the Job, so this is also the time refernce
-            }
-            
-            $calendars = array ( "calendars" => $config['calendars']);
-            $CalendarsFile = DATA_DIR . 'calendars/calendars.yaml';
-            //  dump($CalendarsFile);
-            if (! is_dir(DATA_DIR . 'calendars'))   {
-                mkdir(DATA_DIR . 'calendars', 0775);  // create data dir, if not exists
-            }
-            $CalfileAge = 0; // default, is always older than any existing file
-            if (\file_exists($CalendarsFile))   {
-                $CalfileAge = time()-filemtime($CalendarsFile);
-            }
-            $formatter = new YamlFormatter;
-            $content = $formatter->encode($config["calendars"]);
-            //  dump($content);
-            if (($JobfileAge < $CalfileAge) or (! file_exists($CalendarsFile))) {
-                \file_put_contents($CalendarsFile, $content);   // write new $CalendarsFile only if existing Version is older than $JobFile
+                
+                $calendars = array ( "calendars" => $config['calendars']);
+                $CalendarsFile = DATA_DIR . 'calendars/calendars.yaml';
+                //  dump($CalendarsFile);
+                if (! is_dir(DATA_DIR . 'calendars'))   {
+                    mkdir(DATA_DIR . 'calendars', 0775);  // create data dir, if not exists
+                }
+                $CalfileAge = 0; // default, is always older than any existing file
+                if (\file_exists($CalendarsFile))   {
+                    $CalfileAge = time()-filemtime($CalendarsFile);
+                }
+                $formatter = new YamlFormatter;
+                $content = $formatter->encode($config["calendars"]);
+                //  dump($content);
+                if (($JobfileAge < $CalfileAge) or (! file_exists($CalendarsFile))) {
+                    \file_put_contents($CalendarsFile, $content);   // write new $CalendarsFile only if existing Version is older than $JobFile
+                }
             }
         }
-        //  $this::createCalendars($CalendarsFile);
+        //  $this::createCalendars($CalendarsFile); // only for Testing !
     }
 
     public static function startswith ($string, $stringToSearchFor) {  // was: private, not static
