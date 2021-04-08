@@ -2,7 +2,7 @@
 
 The **Caldav2ics** Plugin is an extension for [Grav CMS](http://github.com/getgrav/grav). It creates ICS Calendar File(s) from remote Caldav Calendar(s)
 
-**Motivation:**
+**Motivation:**  
 Ever thought about to use your (remote) CalDav Calendar(s) as an automatic data source for your favourite Grav Calendar Plugin ?  
 Searched for a Plugin that would provide this functionality in the Grav Plugins Directory and found nothing useful ?  
 Well, in case of 'Yes' to both questions, this is for You :smile:.  
@@ -13,7 +13,7 @@ This way, the Generation of the ICS Calendar(s) is automated to run at predefine
 
 Installing the Caldav2ics plugin can be done in one of three ways: The GPM (Grav Package Manager) installation method lets you quickly install the plugin with a simple terminal command, the manual method lets you do so via a zip file, and the admin method lets you do so via the Admin Plugin.
 
-### GPM Installation (Preferred)
+### GPM Installation (Preferred) - NOTE: This method is currently not available, as this Plugin is not (yet) in the Grav Repository !
 
 To install the plugin via the [GPM](http://learn.getgrav.org/advanced/grav-gpm), through your system's terminal (also called the command line), navigate to the root of your Grav-installation, and enter:
 
@@ -31,14 +31,14 @@ You should now have all the plugin files under
 	
 > NOTE: This plugin is a modular component for Grav which may require other plugins to operate, please see its [blueprints.yaml-file on GitHub](https://github.com/wernerjoss/grav-plugin-caldav2ics/blob/master/blueprints.yaml).  
 
-### Admin Plugin
+### Admin Plugin - NOTE: This method is currently not available, as this Plugin is not (yet) in the Grav Repository !
 
 If you use the Admin Plugin, you can install the plugin directly by browsing the `Plugins`-menu and clicking on the `Add` button.
 
 ## Configuration
 
 Before configuring this plugin, you should copy the `user/plugins/caldav2ics/caldav2ics.yaml` to `user/config/plugins/caldav2ics.yaml` and only edit that copy.  
-Be sure to make the file jobs/create_calendars.php executable (chmod +x) in case you edit the config file by hand - in case you the Admin for Configuration, this will be done automatically upon save (there seems to be no way to do this upon Installation).
+Be sure to make the file jobs/create_calendars.php executable (chmod +x) in case you edit the config file by hand - in case you use the Admin for Configuration, this will be done automatically upon save (there seems to be no way to do this upon Installation).
 
 Here is a sample configuration for a single remote Calendar:
 
@@ -76,9 +76,8 @@ As said, it requires cron access for the Server's www user (mostly www-data).
 before saving the plugin configuration (remote calendar data..), please check if the default PHP shebang 
   #!/usr/bin/php
 is correct for your Webserver, if not, it will be detected automatically, only in case this detection fails (can be seen in the logs): correct it, otherwise the Plugin will NOT work (note the Tooltip).  
-In case you do not have cron access on your webserver (so, Grav Scheduler not functional), but some other possibility to run a single php script periodically,
-you may want to use the [standalone caldav2ics](https://github.com/wernerjoss/caldav2ics) for the same functionality.  
-In this case, you can use this Plugin as a graphical Frontend to easily create a config file (caldav2ics.yaml) for the mentioned standalone script.
+In case you do not have cron access on your webserver (so, Grav Scheduler not functional), but some other possibility to run a single php script periodically, you may want to use the [standalone caldav2ics](https://github.com/wernerjoss/caldav2ics) for the same functionality.  
+In this case, you can use this Plugin as a graphical Frontend to easily create a config file (user/data/calendars/calendars.yaml) for the mentioned standalone script.
 Additionally, there is even a scenario to run this Plugin automatically on a local Server and then push the created ICS File(s) to your production Server - this can also be done automatically via crontab, e.g. with ncftp (ncftp can upload Files automatically without user intervention).  
 Also be aware that the recommended way to configure this plugin is to use the Grav Admin Backend, as this ensures all necessary file/directory creation is done via the webserver user account, so, in case of manual installation and configuration, make sure all plugin files/directories, as well as user/data and user/config are readable and writable by that user.
 

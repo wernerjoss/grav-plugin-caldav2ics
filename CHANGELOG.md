@@ -1,3 +1,9 @@
+# v0.2.3
+##  04/07/2021
+
+1. [](#new)
+    * removed unused code, provided sane default config to ensure working out-of-the box :-)
+
 # v0.2.0
 ##  03/25/2021
 

@@ -86,25 +86,12 @@ class Caldav2icsPlugin extends Plugin
                     } else {
                         $JobFile = $VendorJobFile;
                     }
-                    $CalendarsFile = DATA_DIR . 'calendars/calendars.yaml';
-                    if (! is_dir(DATA_DIR . 'calendars'))   {
-                        mkdir(DATA_DIR . 'calendars', 0775);  // create data dir, if not exists
-                    }
-                    $CalfileAge = 0; // default, is always older than any existing file
-                    if (\file_exists($CalendarsFile))   {
-                        $CalfileAge = time()-filemtime($CalendarsFile);
-                    }
-                    $JobfileAge = time()-filemtime($JobFile);    // $VendorJobFile is used to do the Job, so this is also the time refernce
-                    if ($JobfileAge < $CalfileAge)  {
-                        $content = Yaml::dump($config["calendars"]);
-                        \file_put_contents($CalendarsFile, $content);   // write new $CalendarsFile only if existing Version is older than $JobFile
-                    }
                     //  see php.net:
                     //  When trying to make a callable from a function name located in a namespace, you MUST give the fully qualified function name (regardless of the current namespace or use statements).
                     //  $job = $scheduler->addFunction('Grav\Plugin\Caldav2icsPlugin::createCalendars', $CalendarsFile);    // same as addCommand()...
                     //  $job = $scheduler->addCommand('Grav\Plugin\Caldav2icsPlugin::createCalendars', $CalendarsFile); // this does not (yet) work !
 
-                    $job = $scheduler->addCommand($JobFile, $CalendarsFile);    // old approach via external PHP script, ugly, but works :-)
+                    $job = $scheduler->addCommand($JobFile, USER_DIR);    // new approach (08.04.21): only pass USER_DIR to create_calendars.php
                     
                     $job->at($at);
                     $job->output($logs);
@@ -176,23 +163,6 @@ class Caldav2icsPlugin extends Plugin
                     }
                 }   else    {
                     $JobfileAge = time()-filemtime($VendorJobFile);    // $VendorJobFile is used to do the Job, so this is also the time refernce
-                }
-                
-                $calendars = array ( "calendars" => $config['calendars']);
-                $CalendarsFile = DATA_DIR . 'calendars/calendars.yaml';
-                //  dump($CalendarsFile);
-                if (! is_dir(DATA_DIR . 'calendars'))   {
-                    mkdir(DATA_DIR . 'calendars', 0775);  // create data dir, if not exists
-                }
-                $CalfileAge = 0; // default, is always older than any existing file
-                if (\file_exists($CalendarsFile))   {
-                    $CalfileAge = time()-filemtime($CalendarsFile);
-                }
-                $formatter = new YamlFormatter;
-                $content = $formatter->encode($config["calendars"]);
-                //  dump($content);
-                if (($JobfileAge < $CalfileAge) or (! file_exists($CalendarsFile))) {
-                    \file_put_contents($CalendarsFile, $content);   // write new $CalendarsFile only if existing Version is older than $JobFile
                 }
             }
         }

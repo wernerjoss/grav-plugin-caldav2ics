@@ -16,58 +16,71 @@
 	require_once __DIR__ . '/../vendor/autoload.php';
 
 	if ($argc > 1)
-		$CalendarsFile = $argv[1];
-	if ($argc > 2)
-		$IcsPath = $argv[2];
+		$UserDir = $argv[1];
+	// new approach 08.04.21: derive $CalendarsFile and $ICSpath from Grav USER_DIR
+	$CalendarsFile = $UserDir.'config/plugins/caldav2ics.yaml';
+	$ICSpath = $UserDir.'data/calendars/';
+	/*
+	var_dump($CalendarsFile);
+	var_dump($ICSpath);
+	*/
+	//	exit;
 	if ( file_exists($CalendarsFile) ) {
 		$Config = Yaml::parseFile($CalendarsFile);	// now, this is a real yaml file ;-)
-		//	var_dump($Config);
+		if ($verbose)	var_dump($Config);
+		if (is_array($Config['calendars']))	{
+			$calendars = $Config['calendars'];
+			/*
+			var_dump($calendars);
+			foreach($calendars as $calendar)	{
+				var_dump($calendar);
+			}
+			*/
+		}	else {
+			die("invalid Calendar data, aborted!");
+		}
 		//	exit;
 	}	else	{	
-		die("Calendars File not found, abort !");
+		echo("Calendars File not found, using default Config data !");
 	}
-	
-	$LogFile = pathinfo($CalendarsFile, PATHINFO_DIRNAME)."/create_calendars.log";
 
-	//	var_dump('Entry:', $Config);
-	foreach ($Config as $calendars) {
-		$cal = (array) $calendars;
+	$LogFile = $ICSpath."create_calendars.log";
+
+	foreach ($calendars as $calendar) {
+		if ($verbose)	var_dump($calendar);
+		$cal = $calendar;	//	(array) $calendars;
 		$name = $cal["Name"];
 		$calendar_url = $cal['Url'];
 		$calendar_user = $cal['User'];
 		$calendar_password = $cal['Pass'];
-		$IcalFile = pathinfo($CalendarsFile, PATHINFO_DIRNAME)."/".$name.".ics";
-		//	var_dump($IcalFile);
-		//	break;
+		
+		$ICalFile = $ICSpath."/".$name.".ics";	// ical file name
 		if ($verbose) {
 			echo "\n";
-			echo "Calendar: $name\n";
-			echo "URL: $calendar_url\n";
-			$user = md5($calendar_user, true);
-			echo "User: $user\n";
-			$pw = md5($calendar_password, true);
-			echo "PW: $pw\n";
-			echo "$IcalFile\n";
+			echo "$name\n";
+			echo "$calendar_url\n";
+			echo "$calendar_user\n";
+			echo "$calendar_password\n";
+			echo "$ICalFile\n";
 		}
-		//	break;
+		//	continue;	//	NOT	break;
 		$fmdelay = 60;	// seconds
-
-		$loghandle = null;
+		
 		if ($LogEnabled)	{
 			$loghandle = fopen($LogFile, 'w') or die('Cannot open file:  '.$LogFile);
 		}
 		if (empty($calendar_url) || empty($calendar_user) || empty($calendar_password))	{
 			if (!$LogEnabled) {
 				$loghandle = fopen($LogFile, 'w') or die('Cannot open file:  '.$LogFile);
-				fwrite($loghandle, "Invalid Settings !\n");
-				fwrite($loghandle, "Calendar URL: ".$calendar_url." must be specified\n");
-				fwrite($loghandle, "Username: ".md5($calendar_user, true)." must be specified\n");
-				fwrite($loghandle, "Password: ".md5($calendar_password, true)." must be specified\n");
-				fclose($loghandle);
 			}
+			fwrite($loghandle, "Invalid Settings !\n");
+			fwrite($loghandle, "Calendar URL: ".$calendar_url." must be specified\n");
+			fwrite($loghandle, "Username: ".$calendar_user." must be specified\n");
+			fwrite($loghandle, "Password: ".$calendar_password." must be specified\n");
+			fclose($loghandle);
 			return;
 		}
-
+		
 		if (filter_var($calendar_url, FILTER_VALIDATE_URL) === false) {
 			print_r("Invalid Calendar URL: ", $calendar_url);
 			if (!$LogEnabled) {
@@ -81,20 +94,18 @@
 		if ($LogEnabled)	{
 			print_r($calendar_url);
 			fwrite($loghandle, $calendar_url."\n");
-			/*	no :-)
 			fwrite($loghandle, $calendar_user."\n");
 			fwrite($loghandle, $calendar_password."\n");
-			*/
 			fwrite($loghandle, "Delay:".$fmdelay."\n");
 			fwrite($loghandle, "EnableLog:".$LogEnabled."\n");
-		}
+		}	
 		// Simple caching system, feel free to change the delay
-		if (file_exists($IcalFile)) {
-			$last_update = filemtime($IcalFile);
+		if (file_exists($ICalFile)) {
+			$last_update = filemtime($ICalFile);
 		} else {
 			$last_update = 0;
 		}
-		if ($last_update + $fmdelay < time()) {
+		if ($last_update + $fmdelay < time()) {	
 
 			// Get events
 			$headers = array(
@@ -102,7 +113,7 @@
 				'Depth: 1',
 				'Prefer: return-minimal'
 			);
-
+			
 			// see https://uname.pingveno.net/blog/index.php/post/2016/07/30/Sample-public-calendar-for-ownCloud-using-ICS-parser
 			// Prepare request body, MANDATORY !
 			$doc  = new DOMDocument('1.0', 'utf-8');
@@ -125,9 +136,9 @@
 
 			$doc->appendChild($query);
 			$body = $doc->saveXML();
-
+			
 			// Debugging purpose
-			if ($LogEnabled) {
+			if ($LogEnabled) { 
 				echo htmlspecialchars($body);
 				fwrite($loghandle, htmlspecialchars($body));
 			}
@@ -147,8 +158,8 @@
 
 			$response = curl_exec($ch);
 			if (curl_error($ch)) {
-				if ($LogEnabled) {
-					echo curl_error($ch);
+				if ($LogEnabled) { 
+					echo curl_error($ch); 
 					fwrite($loghandle, curl_error($ch));
 					fclose($loghandle);
 				}
@@ -157,7 +168,7 @@
 			curl_close($ch);
 
 			// Debugging purpose
-			if ($LogEnabled) {
+			if ($LogEnabled) { 
 				echo htmlspecialchars($response);
 				fwrite($loghandle, htmlspecialchars($response));
 			}
@@ -168,8 +179,8 @@
 
 			// Parse events
 			$calendar_events = array();
-			$handle = fopen($IcalFile, 'w') or die('Cannot open file:  '.$IcalFile);
-
+			$handle = fopen($ICalFile, 'w') or die('Cannot open file:  '.$ICalFile);
+			
 			// create valid ICS File with only ONE Vcalendar !
 			// write VCALENDAR header
 			fwrite($handle, 'BEGIN:VCALENDAR'."\r\n");
@@ -223,7 +234,7 @@
 			}
 			fwrite($handle, 'END:VCALENDAR'."\r\n");
 			fclose($handle);
-				if ($LogEnabled) {
+				if ($LogEnabled) { 
 				fclose($loghandle);
 			}
 		}
