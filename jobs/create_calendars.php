@@ -4,12 +4,8 @@
 	use Symfony\Component\DomCrawler\Crawler;
 	
 	// Standalone CalDav2ics (e.g. for cron job...)
-	// stores Logfile and Calendar File in same Directory as script
-	// can fetch/process multiple calendars at once, just put these as a json encoded array in $CalendarsFile, a sample File is included here for convenience
-	// as stated below, $CalendarsFile is a json file, but renamed for security reasons, as it contains sensible login data (userames/passwords)
-	// proposal is caldav2ics.yaml, as yaml files are usually not served by apache, even if their name/address ist known. but e.g. config.php will also do.
-	// the reason I did not use yaml format here is, that most hosting environments do not include php-yaml, but php-json.
-
+	// this Version is intended to be called from ../caldav2ics.php with Grav's USER_DIR as cli Argument #1 - all else is derived from that.
+	
 	$verbose = true;
 	$LogEnabled = true;
 
@@ -161,6 +157,7 @@
 				if ($LogEnabled) { 
 					echo curl_error($ch); 
 					fwrite($loghandle, curl_error($ch));
+					fwrite($loghandle, "\r\n");
 					fclose($loghandle);
 				}
 				return;

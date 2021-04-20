@@ -108,14 +108,14 @@ class Caldav2icsPlugin extends Plugin
 
     public function onAdminAfterSave(Event $e): void
     {
-        /** @var Data */
-        $data = $e['object'];   //  <-- Contains the new data submitted by Admin, do NOT use $config = $this->config();
-        //  dump($data);
-        $isEnabled = $data['enabled'];
-        //  dump($isEnabled);
-        $hasJobsEnabled = $data['scheduled_jobs']['enabled'];
-        //  dump($hasJobsEnabled);
-        if ($isEnabled && $hasJobsEnabled) {   // instead of: if ($config['enabled']) {   
+        /** @var config **/
+        $config = $e['object'];   //  <-- Contains the new data submitted by Admin, do NOT use '$config = $this->config();' here !
+        //  dump($config);
+        $IsEnabled = $config['enabled'];
+        //  dump($IsEnabled);
+        $HasJobsEnabled = $config['scheduled_jobs']['enabled'];
+        //  dump($HasJobsEnabled);
+        if ($IsEnabled && $HasJobsEnabled) {
             $VendorJobFile = pathinfo(__FILE__, PATHINFO_DIRNAME)."/jobs/create_calendars.php";
             $Perms = substr(sprintf('%o', fileperms($VendorJobFile)), -4);  // actual Permissions, octal
             //  dump($Perms);
@@ -132,7 +132,7 @@ class Caldav2icsPlugin extends Plugin
                     //  dump($php);
                     $shebang = "#!".$php;
                 }
-                dump($shebang); 
+                //  dump($shebang); 
                 $lines = array();
                 $handle = fopen($VendorJobFile, 'r');
                 if ($handle) {
