@@ -9,7 +9,6 @@ use RocketTheme\Toolbox\File\File;
 use Symfony\Component\DomCrawler\Crawler;
 use Grav\Common\Yaml;
 use Grav\Framework\File\Formatter\YamlFormatter;
-
 use Symfony\Component\Process\PhpExecutableFinder;  // for php executable detection
 
 /**
@@ -56,6 +55,11 @@ class Caldav2icsPlugin extends Plugin
     public function onPluginsInitialized(): void
     {
         if ($this->isAdmin()) {
+            /** @var Uri */
+            $uri = $this->grav['uri'];
+            if ('caldav2ics' !== $uri->basename()) {
+                return; // do not enable onAdminAfterSave if not in plugin Admin page
+            }
             $this->enable([
                 //  see https://github.com/trilbymedia/grav-plugin-tntsearch/blob/develop/tntsearch.php
                 'onAdminAfterSave'    => ['onAdminAfterSave', 0],
@@ -88,9 +92,9 @@ class Caldav2icsPlugin extends Plugin
                     }
                     //  see php.net:
                     //  When trying to make a callable from a function name located in a namespace, you MUST give the fully qualified function name (regardless of the current namespace or use statements).
-                    //  $job = $scheduler->addFunction('Grav\Plugin\Caldav2icsPlugin::createCalendars', $CalendarsFile);    // same as addCommand()...
                     //  $job = $scheduler->addCommand('Grav\Plugin\Caldav2icsPlugin::createCalendars', $CalendarsFile); // this does not (yet) work !
-
+                    //  $job = $scheduler->addFunction('Grav\Plugin\Caldav2icsPlugin::createCalendars', $CalendarsFile);    // same as addCommand()...
+                    
                     $job = $scheduler->addCommand($JobFile, USER_DIR);    // new approach (08.04.21): only pass USER_DIR to create_calendars.php
                     
                     $job->at($at);
@@ -102,10 +106,16 @@ class Caldav2icsPlugin extends Plugin
         }
     }
 
-    public function onAdminAfterSave(): void
+    public function onAdminAfterSave(Event $e): void
     {
-        $config = $this->config();
-        if ($config['enabled']) {   
+        /** @var Data */
+        $data = $e['object'];   //  <-- Contains the new data submitted by Admin, do NOT use $config = $this->config();
+        //  dump($data);
+        $isEnabled = $data['enabled'];
+        //  dump($isEnabled);
+        $hasJobsEnabled = $data['scheduled_jobs']['enabled'];
+        //  dump($hasJobsEnabled);
+        if ($isEnabled && $hasJobsEnabled) {   // instead of: if ($config['enabled']) {   
             $VendorJobFile = pathinfo(__FILE__, PATHINFO_DIRNAME)."/jobs/create_calendars.php";
             $Perms = substr(sprintf('%o', fileperms($VendorJobFile)), -4);  // actual Permissions, octal
             //  dump($Perms);
@@ -122,7 +132,7 @@ class Caldav2icsPlugin extends Plugin
                     //  dump($php);
                     $shebang = "#!".$php;
                 }
-                //  dump($shebang); 
+                dump($shebang); 
                 $lines = array();
                 $handle = fopen($VendorJobFile, 'r');
                 if ($handle) {
@@ -166,7 +176,6 @@ class Caldav2icsPlugin extends Plugin
                 }
             }
         }
-        //  $this::createCalendars($CalendarsFile); // only for Testing !
     }
 
     public static function startswith ($string, $stringToSearchFor) {  // was: private, not static
