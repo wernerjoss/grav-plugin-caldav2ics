@@ -75,33 +75,31 @@ class Caldav2icsPlugin extends Plugin
     {
         $config = $this->config();
         //  dump($config);
-        if ($config['enabled']) {   // NICHT plugins.caldav2ics.enabled !!!
-            if (!empty($config['scheduled_jobs']['enabled'])) {    // this is also necessary
-                if (!empty($config['calendars']) && ($config['scheduled_jobs']['enabled'])) {
-                    //  dump($config['calendars']); // just to check in backend when this is called - always :-/
-                    $scheduler = $e['scheduler'];
-                    $at = $config['scheduled_jobs']['at'] ?? '* * * * *';
-                    $logs = $config['scheduled_jobs']['logs'] ?? '';
+        if ($config['scheduled_jobs']['enabled']) {    // this is also necessary
+            if (!empty($config['calendars']) && ($config['scheduled_jobs']['enabled'])) {
+                //  dump($config['calendars']); // just to check in backend when this is called - always :-/
+                $scheduler = $e['scheduler'];
+                $at = $config['scheduled_jobs']['at'] ?? '* * * * *';
+                $logs = $config['scheduled_jobs']['logs'] ?? '';
 
-                    $VendorJobFile = pathinfo(__FILE__, PATHINFO_DIRNAME)."/jobs/create_calendars.php";
-                    $RealJobFile = pathinfo(__FILE__, PATHINFO_DIRNAME)."/jobs/job.php";
-                    if (file_exists($RealJobFile)) {
-                        $JobFile = $RealJobFile;
-                    } else {
-                        $JobFile = $VendorJobFile;
-                    }
-                    //  see php.net:
-                    //  When trying to make a callable from a function name located in a namespace, you MUST give the fully qualified function name (regardless of the current namespace or use statements).
-                    //  $job = $scheduler->addCommand('Grav\Plugin\Caldav2icsPlugin::createCalendars', $CalendarsFile); // this does not (yet) work !
-                    //  $job = $scheduler->addFunction('Grav\Plugin\Caldav2icsPlugin::createCalendars', $CalendarsFile);    // same as addCommand()...
-                    
-                    $job = $scheduler->addCommand($JobFile, USER_DIR);    // new approach (08.04.21): only pass USER_DIR to create_calendars.php
-                    
-                    $job->at($at);
-                    $job->output($logs);
-                    $job->backlink('/plugins/caldav2ics');
-                    //  dump($job); // just to check in backend when this is called - always :-/
+                $VendorJobFile = pathinfo(__FILE__, PATHINFO_DIRNAME)."/jobs/create_calendars.php";
+                $RealJobFile = pathinfo(__FILE__, PATHINFO_DIRNAME)."/jobs/job.php";
+                if (file_exists($RealJobFile)) {
+                    $JobFile = $RealJobFile;
+                } else {
+                    $JobFile = $VendorJobFile;
                 }
+                //  see php.net:
+                //  When trying to make a callable from a function name located in a namespace, you MUST give the fully qualified function name (regardless of the current namespace or use statements).
+                //  $job = $scheduler->addCommand('Grav\Plugin\Caldav2icsPlugin::createCalendars', $CalendarsFile); // this does not (yet) work !
+                //  $job = $scheduler->addFunction('Grav\Plugin\Caldav2icsPlugin::createCalendars', $CalendarsFile);    // same as addCommand()...
+                
+                $job = $scheduler->addCommand($JobFile, USER_DIR);    // new approach (08.04.21): only pass USER_DIR to create_calendars.php
+                
+                $job->at($at);
+                $job->output($logs);
+                $job->backlink('/plugins/caldav2ics');
+                //  dump($job); // just to check in backend when this is called - always :-/
             }
         }
     }
@@ -110,7 +108,7 @@ class Caldav2icsPlugin extends Plugin
     {
         /** @var config **/
         $config = $e['object'];   //  <-- Contains the new data submitted by Admin, do NOT use '$config = $this->config();' here !
-        //  dump($config);
+        dump($config);
         $IsEnabled = $config['enabled'];
         //  dump($IsEnabled);
         $HasJobsEnabled = $config['scheduled_jobs']['enabled'];
