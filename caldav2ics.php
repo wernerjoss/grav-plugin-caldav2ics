@@ -108,11 +108,11 @@ class Caldav2icsPlugin extends Plugin
     public function onAdminAfterSave(Event $e): void
     {
         /** @var cfgData **/
-        $cfgData = $e['object'];   //  <-- Contains the new data submitted by Admin, do NOT use '$cfgData = $this->config();' here !
-        //  dump($cfgData);
-        $IsEnabled = $cfgData['enabled'];
+        $CfgData = $e['object'];   //  <-- Contains the new data submitted by Admin, do NOT use '$CfgData = $this->config();' here !
+        //  dump($CfgData);
+        $IsEnabled = $CfgData['enabled'];
         //  dump($IsEnabled);
-        $HasJobsEnabled = $cfgData['scheduled_jobs']['enabled'];
+        $HasJobsEnabled = $CfgData['scheduled_jobs']['enabled'];
         //  dump($HasJobsEnabled);
         if ($IsEnabled && $HasJobsEnabled) {
             $VendorJobFile = pathinfo(__FILE__, PATHINFO_DIRNAME)."/jobs/create_calendars.php";
@@ -121,8 +121,8 @@ class Caldav2icsPlugin extends Plugin
             if (! $this::startswith($Perms, '0775'))    {
                 chmod($VendorJobFile, 0775);  // octal; correct value of mode only if not executable
             }
-            if (!empty($cfgData['calendars'])) {
-                $shebang = $cfgData["shebang"];  // new approach, as PhpExecutableFinder(); does not always work !
+            if (!empty($CfgData['calendars'])) {
+                $shebang = $CfgData["shebang"];  // new approach, as PhpExecutableFinder(); does not always work !
                 //  dump($shebang);
                 if ( $shebang == null ) {   // this is the default, see above: try to find php executable if config is empty, this should work on most servers, if not, override with config value !
                     $PhpBinaryFinder = new PhpExecutableFinder();
