@@ -107,7 +107,7 @@ class Caldav2icsPlugin extends Plugin
 
     public function onAdminAfterSave(Event $e): void
     {
-        /** @var cfgData **/
+        /** @var CfgData **/
         $CfgData = $e['object'];   //  <-- Contains the new data submitted by Admin, do NOT use '$CfgData = $this->config();' here !
         //  dump($CfgData);
         $IsEnabled = $CfgData['enabled'];
