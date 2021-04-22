@@ -57,6 +57,7 @@ class Caldav2icsPlugin extends Plugin
         if ($this->isAdmin()) {
             /** @var Uri */
             $uri = $this->grav['uri'];
+            //  dump($uri);
             if ('caldav2ics' !== $uri->basename()) {
                 return; // do not enable onAdminAfterSave if not in plugin Admin page
             }
@@ -108,7 +109,7 @@ class Caldav2icsPlugin extends Plugin
     {
         /** @var config **/
         $config = $e['object'];   //  <-- Contains the new data submitted by Admin, do NOT use '$config = $this->config();' here !
-        dump($config);
+        //  dump($config);
         $IsEnabled = $config['enabled'];
         //  dump($IsEnabled);
         $HasJobsEnabled = $config['scheduled_jobs']['enabled'];
@@ -120,7 +121,6 @@ class Caldav2icsPlugin extends Plugin
             if (! $this::startswith($Perms, '0775'))    {
                 chmod($VendorJobFile, 0775);  // octal; correct value of mode only if not executable
             }
-            //  dump($config);  // just to check in backend when this is called
             if (!empty($config['calendars'])) {
                 $shebang = $config["shebang"];  // new approach, as PhpExecutableFinder(); does not always work !
                 //  dump($shebang);
@@ -186,8 +186,10 @@ class Caldav2icsPlugin extends Plugin
         }
     }
 
+    /*
     public static function createCalendars($CalendarsFile)   {  
         // TODO: make this work when called from the scheduler (currently only works with direct call from inside admin), Code omitted for the time beeing
         return true;
     }
+    */
 }
