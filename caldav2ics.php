@@ -57,7 +57,6 @@ class Caldav2icsPlugin extends Plugin
         if ($this->isAdmin()) {
             /** @var Uri */
             $uri = $this->grav['uri'];
-            //  dump($uri);
             if ('caldav2ics' !== $uri->basename()) {
                 return; // do not enable onAdminAfterSave if not in plugin Admin page
             }
@@ -75,10 +74,8 @@ class Caldav2icsPlugin extends Plugin
     public function onSchedulerInitialized(Event $e): void
     {
         $config = $this->config();
-        //  dump($config);
         if ($config['scheduled_jobs']['enabled']) {    // this is also necessary
             if (!empty($config['calendars']) && ($config['scheduled_jobs']['enabled'])) {
-                //  dump($config['calendars']); // just to check in backend when this is called - always :-/
                 $scheduler = $e['scheduler'];
                 $at = $config['scheduled_jobs']['at'] ?? '* * * * *';
                 $logs = $config['scheduled_jobs']['logs'] ?? '';
@@ -100,7 +97,6 @@ class Caldav2icsPlugin extends Plugin
                 $job->at($at);
                 $job->output($logs);
                 $job->backlink('/plugins/caldav2ics');
-                //  dump($job); // just to check in backend when this is called - always :-/
             }
         }
     }
@@ -109,28 +105,21 @@ class Caldav2icsPlugin extends Plugin
     {
         /** @var CfgData **/
         $CfgData = $e['object'];   //  <-- Contains the new data submitted by Admin, do NOT use '$CfgData = $this->config();' here !
-        //  dump($CfgData);
         $IsEnabled = $CfgData['enabled'];
-        //  dump($IsEnabled);
         $HasJobsEnabled = $CfgData['scheduled_jobs']['enabled'];
-        //  dump($HasJobsEnabled);
         if ($IsEnabled && $HasJobsEnabled) {
             $VendorJobFile = pathinfo(__FILE__, PATHINFO_DIRNAME)."/jobs/create_calendars.php";
             $Perms = substr(sprintf('%o', fileperms($VendorJobFile)), -4);  // actual Permissions, octal
-            //  dump($Perms);
             if (! $this::startswith($Perms, '0775'))    {
                 chmod($VendorJobFile, 0775);  // octal; correct value of mode only if not executable
             }
             if (!empty($CfgData['calendars'])) {
                 $shebang = $CfgData["shebang"];  // new approach, as PhpExecutableFinder(); does not always work !
-                //  dump($shebang);
                 if ( $shebang == null ) {   // this is the default, see above: try to find php executable if config is empty, this should work on most servers, if not, override with config value !
                     $PhpBinaryFinder = new PhpExecutableFinder();
                     $php = $php ?? $PhpBinaryFinder->find();
-                    //  dump($php);
                     $shebang = "#!".$php;
                 }
-                //  dump($shebang); 
                 $lines = array();
                 $handle = fopen($VendorJobFile, 'r');
                 if ($handle) {
